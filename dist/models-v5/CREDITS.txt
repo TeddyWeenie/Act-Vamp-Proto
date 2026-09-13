@@ -1,0 +1,13 @@
+Nocturne Character Edition 05
+
+Original character meshes, skeleton layout, costumes and GLB authoring: this Nocturne project.
+Concept and portrait textures: original project concept art (Art Edition 04).
+
+Base animation source: Kay Lousberg / KayKit Game Assets, KayKit Character Pack Adventures 1.0, CC0 1.0.
+https://kaylousberg.itch.io/kaykit-adventurers
+https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0
+Source file: addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb
+Animations sampled and retargeted to new Nocturne proportions; secondary cloth motion added. No KayKit character geometry is included in the three Nocturne GLBs.
+
+Rebuild from project root: node character-source-v5/build.mjs
+Included reference-motion.json contains sampled reference motion; first-time extraction can be reproduced by passing the official Knight.glb to build.mjs when that cache is absent.
