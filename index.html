@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>녹턴 — 세 개의 서약</title><meta name="description" content="세 종족의 서약이 흔들리는 밤. 카툰 3D 파티 RPG 프로토타입."><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%23151d25'/%3E%3Cpath d='M28 7A14 14 0 1 0 32 29A12 12 0 0 1 28 7Z' fill='%23d8b879'/%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art.css"><link rel="stylesheet" href="motion.css"></head>
+<body><div id="app">
+<header><div class="brand"><span class="moon">☾</span><div><strong>녹턴</strong><small>세 개의 서약</small></div><span class="edition">ART EDITION · 05</span></div><nav aria-label="게임 메뉴"><button data-menu="party">인물·장비 <kbd>I</kbd></button><button data-menu="journal">여행 수첩 <kbd>J</kbd></button><button data-menu="guide" aria-label="조작 도움말">?</button><button id="sound" aria-label="소리 켜기">소리 꺼짐</button><button id="save">저장</button></nav></header>
+<main id="stage"><div id="world" aria-label="3D 국경 마을. 바닥 클릭 또는 WASD 이동, E 상호작용." tabindex="0"></div><div class="vignette"></div>
+<section class="location"><small>제1장 · 재의 종소리</small><h1>회색종 마을</h1><p><span class="diamond">◇</span> 삼국 접경지 &nbsp; / &nbsp; 해 질 녘</p></section>
+<aside class="quest"><div class="eyebrow">현재의 여정 <span>01</span></div><h2 id="quest-title">침묵한 동력로</h2><p id="quest-text">서로를 의심하는 세 종족.<br>광장의 기록관에게 사건을 물어보자.</p><button id="objective">기록관에게 이동 <span>↗</span></button></aside>
+<div id="timeline" hidden><div class="timeline-title">행동 순서 <span id="battle-status">시간 진행 중</span></div><div id="gauge-track"></div></div>
+<div id="labels"></div><div id="floats" aria-hidden="true"></div><div id="targets" aria-label="공격 대상"></div>
+<div class="view-controls"><button id="rotate-left" aria-label="왼쪽으로 시점 회전">↶</button><span>시점</span><button id="rotate-right" aria-label="오른쪽으로 시점 회전">↷</button><button id="zoom-in" aria-label="확대">＋</button><button id="zoom-out" aria-label="축소">−</button></div>
+<div id="interact" hidden><button id="interact-button"><kbd>E</kbd> 기록관과 대화</button></div><div id="toast" role="status" aria-live="polite"></div>
+<div id="actions" hidden></div><div id="dialogue" hidden></div><div class="world-bottom"><span id="mode">EXPLORATION <i></i> 자유 탐색</span><span id="hint">바닥 클릭 / WASD 이동 &nbsp; · &nbsp; E 대화 &nbsp; · &nbsp; Q R 시점</span></div>
+</main>
+<footer><div class="party-heading"><small>동행자</small><strong>불완전한 동맹</strong><span id="resources">◈ 180 &nbsp; ✧ 5</span></div><div id="party"></div><button id="camp" class="camp"><span>♧</span>야영<small>HP·MP 회복</small></button></footer>
+</div><dialog id="modal"><div class="modal-head"><div><small id="modal-eyebrow">CODEX</small><h2 id="modal-title"></h2></div><button id="close-modal" aria-label="닫기">✕</button></div><div id="modal-content"></div></dialog>
+<noscript>게임을 실행하려면 JavaScript를 켜 주세요.</noscript><script type="module" src="game.mjs"></script></body></html>

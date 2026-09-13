@@ -1,0 +1,43 @@
+ASSET: lucien
+MODE: Built-in image_gen
+Use case: stylized-concept
+Asset type: Final waist-up dialogue portrait for the original Korean fantasy RPG Nocturne.
+Style/medium: Original high-quality late-1990s/early-2000s Korean/Japanese fantasy RPG hand-painted anime character art, crisp expressive ink linework, controlled cel shading, painterly textile detail. Charming adult chibi-ish large head and compact upper body; adult character identity, consistent with in-game models of 2.5-head proportions. Polished character illustration, restrained classic RPG nostalgia.
+Scene/backdrop: Deep midnight teal neutral vignette background.
+Composition/framing: Vertical 3:4 canvas, exactly ONE character, waist-up portrait only, face centered in upper third, generous breathing room above hair, complete shoulders and hands within frame. Character fills most of canvas, clear silhouette.
+Lighting/mood: Soft luminous face lighting, subtle cool rim light, rich readable fabric colors.
+Constraints: No writing, letters, captions, signature, watermark, logos, UI, border, extra characters, full-body views, modern clothing or modern technology.
+Subject: Lucien, an adult male vampire noble. Elegant pale skin, chin-length silver-blond hair swept to the side, crimson eyes, slightly sly composed expression, one small subtle fang. Burgundy velvet aristocratic coat with delicate gold vine embroidery, high pointed cloak collar, ivory lace cravat, ruby brooch. One hand elegantly rests on the slim rapier hilt visible near the waist. Medieval French/English court fantasy.
+
+ASSET: wolf
+MODE: Built-in image_gen
+Use case: stylized-concept
+Asset type: Final waist-up dialogue portrait for the original Korean fantasy RPG Nocturne.
+Style/medium: Original high-quality late-1990s/early-2000s Korean/Japanese fantasy RPG hand-painted anime character art, crisp expressive ink linework, controlled cel shading, painterly textile detail. Charming adult chibi-ish large head and compact upper body; adult character identity, consistent with in-game models of 2.5-head proportions. Polished character illustration, restrained classic RPG nostalgia.
+Scene/backdrop: Deep midnight teal neutral vignette background.
+Composition/framing: Vertical 3:4 canvas, exactly ONE character, waist-up portrait only, face centered in upper third, generous breathing room above hair, complete shoulders and hands within frame. Character fills most of canvas, clear silhouette.
+Lighting/mood: Soft luminous face lighting, subtle cool rim light, rich readable fabric colors.
+Constraints: No writing, letters, captions, signature, watermark, logos, UI, border, extra characters, full-body views, modern clothing or modern technology.
+Subject: Wolf, an adult anthropomorphic gray wolf male officer, an actual lupine face with a long wolf muzzle and pointed ears, amber eyes, scar across one eyebrow, thick silver-gray mane. Disciplined yet protective expression. Charcoal blue-gray fitted military greatcoat, layered steel pauldrons, brass buttons, leather belt and straps, ivory fur collar. Large greatsword sheathed on back with hilt visible over shoulder. Small invented abstract wolf-rune crest with no legible writing. No guns, Nazi symbols, or real-world political symbols.
+
+ASSET: eda
+MODE: Built-in image_gen
+Use case: stylized-concept
+Asset type: Final waist-up dialogue portrait for the original Korean fantasy RPG Nocturne.
+Style/medium: Original high-quality late-1990s/early-2000s Korean/Japanese fantasy RPG hand-painted anime character art, crisp expressive ink linework, controlled cel shading, painterly textile detail. Charming adult chibi-ish large head and compact upper body; adult character identity, consistent with in-game models of 2.5-head proportions. Polished character illustration, restrained classic RPG nostalgia.
+Scene/backdrop: Deep midnight teal neutral vignette background.
+Composition/framing: Vertical 3:4 canvas, exactly ONE character, waist-up portrait only, face centered in upper third, generous breathing room above hair, complete shoulders and hands within frame. Character fills most of canvas, clear silhouette.
+Lighting/mood: Soft luminous face lighting, subtle cool rim light, rich readable fabric colors.
+Constraints: No writing, letters, captions, signature, watermark, logos, UI, border, extra characters, full-body views, modern clothing or modern technology.
+Subject: Eda, an adult human female rune engineer. Short tousled honey-brown bob, bright teal eyes. Copper/brass goggles with cyan glass pushed atop her head. Teal hooded engineer coat, brown leather harness and gloves, belt pouches. A glowing cyan rune crystal staff/caster held in one gloved hand beside her shoulder. Kind, curious, determined expression. Medieval guild artisan combining magic with antique mechanical craft. No modern technology.
+
+ASSET: orin
+MODE: Built-in image_gen
+Use case: stylized-concept
+Asset type: Final waist-up dialogue portrait for the original Korean fantasy RPG Nocturne.
+Style/medium: Original high-quality late-1990s/early-2000s Korean/Japanese fantasy RPG hand-painted anime character art, crisp expressive ink linework, controlled cel shading, painterly textile detail. Charming adult chibi-ish large head and compact upper body; adult character identity, consistent with in-game models of 2.5-head proportions. Polished character illustration, restrained classic RPG nostalgia.
+Scene/backdrop: Deep midnight teal neutral vignette background.
+Composition/framing: Vertical 3:4 canvas, exactly ONE character, waist-up portrait only, face centered in upper third, generous breathing room above hair, complete shoulders and hands within frame. Character fills most of canvas, clear silhouette.
+Lighting/mood: Soft luminous face lighting, subtle cool rim light, rich readable fabric colors.
+Constraints: No writing, letters, captions, signature, watermark, logos, UI, border, extra characters, full-body views, modern clothing or modern technology.
+Subject: Orin, an older male human archivist. Kind yet wary expression, round brass spectacles, graying chestnut hair, short neat gray beard. Dark sage scholarly robe and ivory scarf. He holds an antique leather ledger with a softly illuminated amber bookmark in one hand and an antique brass key in the other. Medieval fantasy scholar.
