@@ -13,6 +13,47 @@ def runs(mask, min_gap, min_len):
     out.append((s, p + 1))
     return [r for r in out if r[1] - r[0] >= min_len]
 
+def components(mask, keep):
+    """Split a band into its `keep` largest connected figures; small loose bits (a sword tip, a spark)
+    join the nearest one. Used when figures overlap sideways and no clean vertical gap separates them.
+    Returns one boolean mask per figure, left to right, or None if fewer than `keep` figures exist."""
+    parent = []
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    rows = []; prev = []
+    for y in range(mask.shape[0]):
+        d = np.diff(np.concatenate(([0], mask[y].astype(np.int8), [0])))
+        cur = []
+        for x0, x1 in zip(np.where(d == 1)[0], np.where(d == -1)[0]):
+            i = len(parent); parent.append(i)
+            for (px0, px1, pi) in prev:
+                if px0 <= x1 and x0 <= px1: parent[find(pi)] = find(i)
+            cur.append((int(x0), int(x1), i))
+        rows.append(cur); prev = cur
+    labels = np.full(mask.shape, -1, dtype=np.int32); area = {}
+    for y, cur in enumerate(rows):
+        for x0, x1, i in cur:
+            r = find(i); labels[y, x0:x1] = r; area[r] = area.get(r, 0) + x1 - x0
+    big = sorted(area, key=area.get, reverse=True)[:keep]
+    if len(big) < keep: return None
+    centre = {r: np.where((labels == r).any(axis=0))[0].mean() for r in area}
+    big.sort(key=lambda r: centre[r])
+    out = [labels == r for r in big]
+    for r in area:
+        if r not in big:
+            out[int(np.argmin([abs(centre[r] - centre[b]) for b in big]))] |= labels == r
+    return out
+
+def grown(mask, r):
+    """The mask spread by r pixels, so a neighbour is removed together with its soft edge."""
+    out = mask.copy()
+    for dy in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            out |= np.roll(np.roll(mask, dy, axis=0), dx, axis=1)
+    return out
+
 def lowest_foot_x(sub, x0):
     """Centre of the lowest foot: the part of the figure that touches the ground first."""
     h = sub.shape[0]
@@ -38,24 +79,43 @@ def main():
     rr = runs(a.any(axis=1), 12, 40)
     if len(rr) != rows:
         info['method'].append('rows: equal split (found %d)' % len(rr)); rr = [(int(H * i / rows), int(H * (i + 1) / rows)) for i in range(rows)]
-    boxes = []
+    boxes = []; masks = []
     for (y0, y1) in rr:
         cr = runs(a[y0:y1].any(axis=0), 6, 40)
+        figures = None
         if len(cr) != cols:
-            info['method'].append('cols: equal split (found %d)' % len(cr)); cr = [(int(W * i / cols), int(W * (i + 1) / cols)) for i in range(cols)]
+            figures = components(a[y0:y1], cols)
+            if figures is None:
+                info['method'].append('cols: equal split (found %d)' % len(cr)); cr = [(int(W * i / cols), int(W * (i + 1) / cols)) for i in range(cols)]
+            else:
+                info['method'].append('cols: connected figures (found %d gaps)' % len(cr))
         else:
             info['method'].append('cols: gaps')
+        if figures is not None:
+            for f in figures:
+                ys = np.where(f.any(axis=1))[0]; xs = np.where(f.any(axis=0))[0]
+                boxes.append((xs[0], y0 + ys[0], xs[-1] + 1, y0 + ys[-1] + 1, (xs[0] + xs[-1] + 1) / 2))
+                others = np.zeros_like(a); others[y0:y1] = grown(a[y0:y1] & ~f, 3); masks.append(~others)
+            continue
         for (x0, x1) in cr:
             sub = a[y0:y1, x0:x1]
             ys = np.where(sub.any(axis=1))[0]; xs = np.where(sub.any(axis=0))[0]
             boxes.append((x0 + xs[0], y0 + ys[0], x0 + xs[-1] + 1, y0 + ys[-1] + 1, (x0 + x1) / 2))
+            masks.append(None)
+    # masks[i] is where frame i may keep pixels: everything, unless a neighbour reaches into its box.
+    def keep_of(i):
+        b = boxes[i]
+        return None if masks[i] is None else masks[i][b[1]:b[3], b[0]:b[2]]
+    def part_of(i):
+        b = boxes[i]; sub = a[b[1]:b[3], b[0]:b[2]]; keep = keep_of(i)
+        return sub if keep is None else sub & keep
     info['boxes'] = [[int(v) for v in b[:4]] for b in boxes]
     CELL = 512
     mh = max(b[3] - b[1] for b in boxes); 
     # horizontal extent around anchor
     anchors = []
-    for b in boxes:
-        sub = a[b[1]:b[3], b[0]:b[2]]; h = sub.shape[0]
+    for i, b in enumerate(boxes):
+        sub = part_of(i); h = sub.shape[0]
         if anchor == 'feet':
             part = sub[int(h * 0.88):]
         elif anchor == 'head':
@@ -70,7 +130,7 @@ def main():
     if anchor == 'planted':
         # Keep the first frame where a standing pose would be (midway between the feet), so the move
         # does not jump sideways when it starts. Every frame gets the same shift.
-        b = boxes[0]; sub = a[b[1]:b[3], b[0]:b[2]]
+        b = boxes[0]; sub = part_of(0)
         xs = np.where(sub[int(sub.shape[0] * 0.78):].any(axis=0))[0]
         shift = b[0] + (xs[0] + xs[-1]) / 2 - anchors[0]
         anchors = [ax + shift for ax in anchors]
@@ -78,8 +138,10 @@ def main():
     scale = min((CELL - 48) / mh, (CELL_W / 2 - 6) / ext, 1.0)
     info['scale'] = scale; info['max_h'] = int(mh); info['cell'] = [CELL_W, CELL]
     frames = []
-    for b, ax in zip(boxes, anchors):
+    for i, (b, ax) in enumerate(zip(boxes, anchors)):
         crop = im.crop(b[:4]); w, h = crop.size
+        if keep_of(i) is not None:
+            px = np.array(crop); px[~keep_of(i)] = 0; crop = Image.fromarray(px)
         nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
         crop = crop.resize((nw, nh), Image.LANCZOS)
         cell = Image.new('RGBA', (CELL_W, CELL), (0, 0, 0, 0))
