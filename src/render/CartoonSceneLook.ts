@@ -1,15 +1,17 @@
 import {
+  Mesh,
   Quaternion,
   Vector3,
   type Camera,
-  type Mesh,
+  type Material,
   type Object3D,
   type Scene,
+  type Texture,
   type WebGLRenderer,
 } from 'three';
 import { CartoonLook, DEFAULT_CARTOON_SETTINGS, type CartoonSettings, type LightingStage } from './cartoon';
 import { BaseLook, type BuildingSkin, type GroundArea } from './look';
-import { NoTreatment, type ModelTreatment } from './treatment';
+import { NoTreatment, type TextureTreatment } from './treatment';
 
 /** 건물 그림자를 빛 반대쪽으로 미는 정도. 건물 높이가 캐릭터 키의 몇 배인지에 곱한다. */
 const BUILDING_SHADOW_SPREAD = 2.2;
@@ -23,7 +25,7 @@ interface PlacedShadow {
 /**
  * 카툰 화면: 3단계 명암, 스프라이트 선 색의 외곽선, 색 평탄화, 그림의 빛 방향에 맞춘 조명,
  * 화면 전체 색 보정과 안개. 실제 처리는 cartoon 모듈이 하고, 이 클래스는 게임의 약속(SceneLook)에 맞춰 이어 준다.
- * 수치(settings)와 모델 손보기(treatment)는 밖에서 넣어 주며, 묶음은 cartoonStyles.ts에 있다.
+ * 수치(settings)와 건물·바닥 텍스처 손보기(buildingPaint, groundPaint)는 밖에서 넣어 주며, 묶음은 cartoonStyles.ts에 있다.
  */
 export class CartoonSceneLook extends BaseLook {
   private readonly cartoon: CartoonLook;
@@ -35,7 +37,8 @@ export class CartoonSceneLook extends BaseLook {
   constructor(
     private readonly characterHeight: number,
     settings: CartoonSettings = DEFAULT_CARTOON_SETTINGS,
-    private readonly treatment: ModelTreatment = new NoTreatment(),
+    private readonly buildingPaint: TextureTreatment = new NoTreatment(),
+    private readonly groundPaint: TextureTreatment = new NoTreatment(),
   ) {
     super();
     this.cartoon = CartoonLook.createDefault({ ...settings, characterHeight });
@@ -46,10 +49,22 @@ export class CartoonSceneLook extends BaseLook {
     return this.place(this.lighting.createCharacterShadow(), new Vector3(), 1);
   }
 
-  /** 모델을 먼저 손보고 재질과 외곽선을 입힌다. 카툰 재질이 손본 텍스처를 그대로 이어받는다. */
+  /** 텍스처를 먼저 손보고 재질과 외곽선을 입힌다. 카툰 재질이 손본 텍스처를 그대로 이어받는다. */
   dress(model: Object3D): BuildingSkin {
-    this.treatment.apply(model);
+    model.traverse((node) => {
+      if (!(node instanceof Mesh)) return;
+      const materials: Material[] = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) {
+        const map = (material as Material & { map?: Texture | null }).map;
+        if (map) this.buildingPaint.apply(map);
+      }
+    });
     return this.cartoon.addBuilding(model);
+  }
+
+  override groundMaterial(map: Texture): Material {
+    this.groundPaint.apply(map);
+    return super.groundMaterial(map);
   }
 
   groundShadow(area: GroundArea): Object3D {

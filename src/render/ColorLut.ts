@@ -5,21 +5,21 @@ const STEP = 4;
 const SIZE = 256 / STEP + 1;
 
 /**
- * 색 옮기기를 미리 계산해 둔 표. 텍스처는 수백만 점이라 점마다 계산하지 않고,
- * 가까운 격자점의 이동량(옮긴 색 − 원래 색)만 더한다. 이동량은 색에 따라 천천히 변하므로 무늬가 뭉개지지 않는다.
+ * 색 바꾸기를 미리 계산해 둔 표. 텍스처는 수백만 점이라 점마다 계산하지 않고,
+ * 가장 가까운 격자점에 적어 둔 색을 그대로 가져온다.
  */
 export class ColorLut {
-  private readonly shifts: Int16Array;
+  private readonly table: Uint8Array;
 
   constructor(map: ColorMap) {
-    this.shifts = new Int16Array(SIZE * SIZE * SIZE * 3);
+    this.table = new Uint8Array(SIZE * SIZE * SIZE * 3);
+    const level = (index: number) => Math.min(255, index * STEP) / 255;
     let at = 0;
     for (let r = 0; r < SIZE; r++) {
       for (let g = 0; g < SIZE; g++) {
         for (let b = 0; b < SIZE; b++) {
-          const from = [r, g, b].map((v) => Math.min(255, v * STEP));
-          const to = map.map([from[0] / 255, from[1] / 255, from[2] / 255]);
-          for (let c = 0; c < 3; c++) this.shifts[at++] = Math.round(to[c] * 255) - from[c];
+          const to = map.map([level(r), level(g), level(b)]);
+          for (let c = 0; c < 3; c++) this.table[at++] = Math.round(Math.min(1, Math.max(0, to[c])) * 255);
         }
       }
     }
@@ -33,10 +33,9 @@ export class ColorLut {
       const g = (pixels[i + 1] + half) >> 2;
       const b = (pixels[i + 2] + half) >> 2;
       const at = ((r * SIZE + g) * SIZE + b) * 3;
-      // Uint8ClampedArray가 0~255 밖의 값을 잘라 준다.
-      pixels[i] += this.shifts[at];
-      pixels[i + 1] += this.shifts[at + 1];
-      pixels[i + 2] += this.shifts[at + 2];
+      pixels[i] = this.table[at];
+      pixels[i + 1] = this.table[at + 1];
+      pixels[i + 2] = this.table[at + 2];
     }
   }
 }

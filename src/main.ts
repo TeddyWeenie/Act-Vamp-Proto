@@ -3,7 +3,7 @@ import { GameFactory } from './game/GameFactory';
 import { QuarterStaging } from './game/staging/QuarterStaging';
 import type { Staging } from './game/staging/Staging';
 import { TopStaging } from './game/staging/TopStaging';
-import { heroColorLook, heroToneLook, softCartoonLook } from './render/cartoonStyles';
+import { celMatchedLook, softCartoonLook } from './render/cartoonStyles';
 import { FlatLook } from './render/FlatLook';
 import type { SceneLook } from './render/look';
 
@@ -13,8 +13,8 @@ const loading = document.querySelector<HTMLElement>('#loading')!;
 const params = new URLSearchParams(location.search);
 // 기본은 비스듬한 탑뷰 50도. &pitch=45처럼 내려다보는 각도를 바꿔 볼 수 있고, ?view=quarter를 붙이면 예전 45도 쿼터뷰로 비교해 볼 수 있다.
 const staging = createStaging(params);
-// 기본은 카툰 화면. 건물 색을 주인공 색 계열로 옮긴 시안은 ?look=tone(나무·벽·돌)과 ?look=crimson(지붕까지)으로,
-// 꾸밈 없는 화면은 ?look=flat으로 비교해 볼 수 있다.
+// 기본은 건물을 캐릭터 그림과 같은 채색 방식으로 다시 칠한 카툰 화면. 주소에 ?look=soft를 붙이면 다시 칠하기 전 화면으로,
+// ?look=flat을 붙이면 꾸밈 없는 화면으로 비교해 볼 수 있다.
 const look = createLook(params.get('look'), staging.heroHeight);
 
 new GameFactory(canvas, look, staging)
@@ -33,9 +33,8 @@ new GameFactory(canvas, look, staging)
 
 function createLook(name: string | null, heroHeight: number): SceneLook {
   if (name === 'flat') return new FlatLook();
-  if (name === 'tone') return heroToneLook(heroHeight);
-  if (name === 'crimson') return heroColorLook(heroHeight);
-  return softCartoonLook(heroHeight);
+  if (name === 'soft') return softCartoonLook(heroHeight);
+  return celMatchedLook(heroHeight);
 }
 
 function createStaging(query: URLSearchParams): Staging {
