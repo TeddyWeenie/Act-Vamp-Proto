@@ -22,7 +22,7 @@ export class DiagonalFacing implements FacingRule {
   }
 }
 
-/** 앞, 뒤, 옆 세 그림을 쓰고 옆모습만 뒤집는 방식. 화면 축과 나란한 시점에 맞는다. */
+/** 앞, 뒤, 옆(왼쪽·오른쪽) 가운데 한 방향을 고르는 방식. 화면 축과 나란한 시점에 맞는다. */
 export class CardinalFacing implements FacingRule {
   readonly initial: Facing = { back: false, left: true, side: false };
 

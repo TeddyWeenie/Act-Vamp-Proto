@@ -125,10 +125,10 @@ describe('4방향 주인공', () => {
     walk(0, 1);
     expect(sprite.clip).toBe('backWalk');
     walk(1, 0);
-    expect(sprite.clip).toBe('sideWalk');
+    expect(sprite.clip).toBe('rightWalk');
     expect(sprite.left).toBe(false);
     walk(-1, 0);
-    expect(sprite.clip).toBe('sideWalk');
+    expect(sprite.clip).toBe('leftWalk');
     expect(sprite.left).toBe(true);
   });
 
@@ -136,10 +136,18 @@ describe('4방향 주인공', () => {
     const { sprite, walk, stop, attack } = setup();
     walk(-1, 0);
     stop();
-    expect(sprite.clip).toBe('sideIdle');
+    expect(sprite.clip).toBe('leftIdle');
     attack();
-    expect(sprite.clip).toBe('sideAttack');
+    expect(sprite.clip).toBe('leftAttack');
     expect(sprite.left).toBe(true);
+
+    const right = setup();
+    right.walk(1, 0);
+    right.stop();
+    expect(right.sprite.clip).toBe('rightIdle');
+    right.attack();
+    expect(right.sprite.clip).toBe('rightAttack');
+    expect(right.sprite.left).toBe(false);
 
     const second = setup();
     second.walk(0, 1);
@@ -149,12 +157,12 @@ describe('4방향 주인공', () => {
 });
 
 describe('탑뷰 시안 스프라이트 표', () => {
-  it('세 방향의 같은 자세는 길이와 빠르기가 같다', () => {
+  const VIEWS = ['front', 'back', 'left', 'right'] as const;
+
+  it('네 방향의 같은 자세는 길이와 빠르기가 같다', () => {
     for (const pose of ['Idle', 'Walk', 'Attack'] as const) {
-      const [front, back, side] = (['front', 'back', 'side'] as const).map(
-        (view) => LUCIEN_CARDINAL.clips[`${view}${pose}`],
-      );
-      for (const clip of [back, side]) {
+      const [front, ...others] = VIEWS.map((view) => LUCIEN_CARDINAL.clips[`${view}${pose}`]);
+      for (const clip of others) {
         expect(clip.frames).toBe(front.frames);
         expect(clip.fps).toBe(front.fps);
         expect(clip.loop).toBe(front.loop);
@@ -162,9 +170,16 @@ describe('탑뷰 시안 스프라이트 표', () => {
     }
   });
 
-  it('정면과 뒷면은 뒤집지 않고, 옆모습만 방향을 가진다', () => {
+  it('칼 든 손이 바뀌지 않도록 어떤 그림도 뒤집지 않는다', () => {
     for (const [name, clip] of Object.entries(LUCIEN_CARDINAL.clips)) {
-      expect(clip.faces).toBe(name.startsWith('side') ? 'left' : 'center');
+      const expected = name.startsWith('left') ? 'left' : name.startsWith('right') ? 'right' : 'center';
+      expect(clip.faces).toBe(expected);
+    }
+  });
+
+  it('왼쪽과 오른쪽은 서로 다른 그림 파일을 쓴다', () => {
+    for (const pose of ['Idle', 'Walk', 'Attack'] as const) {
+      expect(LUCIEN_CARDINAL.clips[`left${pose}`].url).not.toBe(LUCIEN_CARDINAL.clips[`right${pose}`].url);
     }
   });
 });

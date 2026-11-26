@@ -11,7 +11,7 @@ import type { SpriteSource, Staging } from './Staging';
 
 /**
  * 비스듬한 탑뷰(시안). 카메라를 돌리지 않고 위에서 비스듬히 내려다본다.
- * 주인공은 앞, 뒤, 옆 그림을 쓰고 옆모습만 좌우로 뒤집는다.
+ * 주인공은 앞, 뒤, 왼쪽, 오른쪽 그림을 따로 쓴다.
  */
 export class TopStaging implements Staging {
   readonly angle: ViewAngle;

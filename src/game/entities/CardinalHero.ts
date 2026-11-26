@@ -7,14 +7,22 @@ import type { Vec2 } from '../logic/view';
 import type { Pose } from '../states/characterStates';
 import { Character, type CharacterBody } from './Character';
 
-const CLIPS: Readonly<Record<Pose, { front: CardinalClip; back: CardinalClip; side: CardinalClip }>> = {
-  idle: { front: 'frontIdle', back: 'backIdle', side: 'sideIdle' },
-  walk: { front: 'frontWalk', back: 'backWalk', side: 'sideWalk' },
-  attack: { front: 'frontAttack', back: 'backAttack', side: 'sideAttack' },
+interface DirectionClips {
+  readonly front: CardinalClip;
+  readonly back: CardinalClip;
+  readonly left: CardinalClip;
+  readonly right: CardinalClip;
+}
+
+const CLIPS: Readonly<Record<Pose, DirectionClips>> = {
+  idle: { front: 'frontIdle', back: 'backIdle', left: 'leftIdle', right: 'rightIdle' },
+  walk: { front: 'frontWalk', back: 'backWalk', left: 'leftWalk', right: 'rightWalk' },
+  attack: { front: 'frontAttack', back: 'backAttack', left: 'leftAttack', right: 'rightAttack' },
 };
 
 /**
- * 앞, 뒤, 옆 그림을 쓰는 주인공. 위아래좌우 네 방향을 보며, 옆모습만 좌우로 뒤집어 쓴다.
+ * 앞, 뒤, 왼쪽, 오른쪽 그림을 따로 쓰는 주인공. 위아래좌우 네 방향을 본다.
+ * 옆모습을 뒤집어 쓰지 않으므로 무기를 든 손이 방향이나 동작에 따라 바뀌지 않는다.
  */
 export class CardinalHero extends Character<CardinalClip> {
   constructor(
@@ -30,7 +38,7 @@ export class CardinalHero extends Character<CardinalClip> {
 
   protected clipFor(pose: Pose, facing: Readonly<Facing>): CardinalClip {
     const views = CLIPS[pose];
-    if (facing.side) return views.side;
+    if (facing.side) return facing.left ? views.left : views.right;
     return facing.back ? views.back : views.front;
   }
 }

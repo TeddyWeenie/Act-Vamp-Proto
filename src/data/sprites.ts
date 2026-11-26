@@ -62,7 +62,10 @@ export const LUCIEN: SpriteSheet<HeroClip> = {
   },
 };
 
-/** 비스듬한 탑뷰(시안)용 이름: 앞, 뒤, 옆 세 방향에 자세 세 가지. */
+/**
+ * 비스듬한 탑뷰(시안)용 이름: 앞, 뒤, 왼쪽, 오른쪽 네 방향에 자세 세 가지.
+ * 한 손에 무기를 든 캐릭터는 옆모습을 뒤집으면 무기 든 손이 바뀌므로 왼쪽과 오른쪽을 따로 둔다.
+ */
 export type CardinalClip =
   | 'frontIdle'
   | 'frontWalk'
@@ -70,9 +73,12 @@ export type CardinalClip =
   | 'backIdle'
   | 'backWalk'
   | 'backAttack'
-  | 'sideIdle'
-  | 'sideWalk'
-  | 'sideAttack';
+  | 'leftIdle'
+  | 'leftWalk'
+  | 'leftAttack'
+  | 'rightIdle'
+  | 'rightWalk'
+  | 'rightAttack';
 
 const lucienTop = (file: string) => `/assets/sprites/lucien-top/${file}.png`;
 
@@ -82,8 +88,9 @@ const thrust = { frames: 6, fps: 12, loop: false } as const;
 const still = { frames: 1, fps: 1, loop: true } as const;
 
 /**
- * 탑뷰 시안용 리시엔. 정면과 뒷면은 좌우가 없어 뒤집지 않고, 옆모습은 왼쪽을 보고 그려져 있다.
- * scale은 같은 방향의 대기 그림과 머리 크기가 같아지도록 맞춘 값이다.
+ * 탑뷰 시안용 리시엔. 어느 방향에서나 칼은 오른손에 든다. 그래서 어떤 그림도 뒤집지 않는다.
+ * 왼쪽을 볼 때는 칼 든 손이 몸 건너편에, 오른쪽을 볼 때는 화면 앞쪽에 온다.
+ * scale은 방향과 자세가 바뀌어도 머리 크기와 키가 튀지 않도록 맞춘 값이다.
  */
 export const LUCIEN_CARDINAL: SpriteSheet<CardinalClip> = {
   height: 2.0,
@@ -100,13 +107,22 @@ export const LUCIEN_CARDINAL: SpriteSheet<CardinalClip> = {
     backIdle: { url: lucienTop('back-idle'), faces: 'center', ...still, scale: 1 },
     backWalk: { url: lucienTop('back-walk'), faces: 'center', ...walkLoop, scale: 1.05 },
     backAttack: { url: lucienTop('back-attack'), faces: 'center', ...thrust, scale: 1.08 },
-    sideIdle: { url: lucienTop('side-idle'), faces: 'left', ...still, scale: 1 },
-    sideWalk: { url: lucienTop('side-walk'), faces: 'left', ...walkLoop, scale: 0.91 },
-    sideAttack: {
-      url: lucienTop('side-attack'),
+    leftIdle: { url: lucienTop('left-idle'), faces: 'left', ...still, scale: 0.96 },
+    leftWalk: { url: lucienTop('left-walk'), faces: 'left', ...walkLoop, scale: 0.9 },
+    leftAttack: {
+      url: lucienTop('left-attack'),
       faces: 'left',
       ...thrust,
       scale: 1.03,
+      cellAspect: 680 / CELL,
+    },
+    rightIdle: { url: lucienTop('right-idle'), faces: 'right', ...still, scale: 1 },
+    rightWalk: { url: lucienTop('right-walk'), faces: 'right', ...walkLoop, scale: 0.91 },
+    rightAttack: {
+      url: lucienTop('right-attack'),
+      faces: 'right',
+      ...thrust,
+      scale: 0.98,
       cellAspect: 680 / CELL,
     },
   },

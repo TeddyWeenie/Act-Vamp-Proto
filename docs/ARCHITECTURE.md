@@ -43,7 +43,8 @@ tests/                     단위 테스트
 ```
 Entity
 ├─ Character (추상)
-│   └─ Hero            앞·뒤 그림을 가진 주인공
+│   ├─ Hero            앞·뒤 그림을 가진 주인공(쿼터뷰)
+│   └─ CardinalHero    앞·뒤·왼쪽·오른쪽 그림을 가진 주인공(탑뷰 시안)
 ├─ Building            길을 막고, 캐릭터를 가리면 옅어진다
 ├─ Ground              바닥
 └─ MoveMarker          클릭 이동 목적지 표시
@@ -66,7 +67,7 @@ BaseLook (추상)
 - **조종**: `MoveSource`를 구현한 `KeyboardMove`와 `PointerMove`를 `PlayerController`가 우선순위대로 묶습니다. 길 찾기나 AI도 같은 인터페이스로 들어옵니다.
 - **화면 느낌**: `SceneLook`을 구현한 `CartoonSceneLook`(기본)과 `FlatLook`을 갈아 끼웁니다. 건물은 `look.dress(model)`로 겉모습을 입고 불투명도만 알려 주며, `Game`은 `look.render(...)`에 그리기를 맡깁니다. 주소에 `?look=flat`을 붙이면 꾸밈 없는 화면으로 바뀝니다.
 - **카메라 구도**: `Staging`을 구현한 `QuarterStaging`(기본, 45도 돌린 쿼터뷰)과 `TopStaging`(시안, 비스듬한 탑뷰)을 갈아 끼웁니다. 구도마다 카메라 각도, 그 각도에 맞게 그린 주인공, 보기 좋은 마을 배치가 함께 바뀌므로 한 묶음으로 둡니다. 주소에 `?view=top`을 붙이면 탑뷰 시안으로 바뀝니다.
-- **방향 정하기**: `FacingRule`을 구현한 `DiagonalFacing`(앞 3/4·뒤 3/4 두 그림)과 `CardinalFacing`(앞·뒤·옆 세 그림)을 캐릭터가 넘겨받아 씁니다. 그림 이름을 고르는 일은 `Hero`와 `CardinalHero`가 각자 `clipFor`로 맡습니다.
+- **방향 정하기**: `FacingRule`을 구현한 `DiagonalFacing`(앞 3/4·뒤 3/4 두 그림)과 `CardinalFacing`(앞·뒤·왼쪽·오른쪽 네 그림)을 캐릭터가 넘겨받아 씁니다. 그림 이름을 고르는 일은 `Hero`와 `CardinalHero`가 각자 `clipFor`로 맡습니다.
 - **월드**: 모든 `Entity`를 한 줄로 세워 같은 `update`를 부릅니다.
 
 ### 캡슐화
