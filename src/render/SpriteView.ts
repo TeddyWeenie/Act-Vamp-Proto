@@ -38,13 +38,7 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     this.mesh.renderOrder = ORDER.sprite;
     this.root.add(this.mesh);
 
-    const shadowGeometry = new PlaneGeometry(1, 1);
-    shadowGeometry.rotateX(-Math.PI / 2);
-    const shadow = new Mesh(shadowGeometry, look.blobShadowMaterial());
-    shadow.scale.set(sheet.height * 0.62, 1, sheet.height * 0.62);
-    shadow.position.y = 0.02;
-    shadow.renderOrder = ORDER.shadow;
-    this.root.add(shadow);
+    this.root.add(look.footShadow(sheet.height));
 
     this.apply();
   }

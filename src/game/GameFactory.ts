@@ -5,7 +5,7 @@ import { PLAYER_START, TOWN, TOWN_BOUNDS } from '../data/town';
 import { ModelLibrary } from '../render/ModelLibrary';
 import { SpriteFactory } from '../render/SpriteFactory';
 import { QuarterCamera } from '../render/camera';
-import { FlatLook, type SceneLook } from '../render/look';
+import type { SceneLook } from '../render/look';
 import { DebugProbe } from './DebugProbe';
 import { Game } from './Game';
 import { World } from './World';
@@ -36,14 +36,13 @@ export interface AssembledGame {
 export class GameFactory {
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly look: SceneLook = new FlatLook(),
+    private readonly look: SceneLook,
   ) {}
 
   async create(): Promise<AssembledGame> {
     const renderer = new WebGLRenderer({ canvas: this.canvas, antialias: true });
     renderer.outputColorSpace = SRGBColorSpace;
     const scene = new Scene();
-    scene.background = this.look.background;
 
     const view = new QuarterCamera();
     const input = new DomInput(this.canvas);
@@ -69,7 +68,7 @@ export class GameFactory {
     occlusion.watch(hero);
 
     return {
-      game: new Game(renderer, scene, view, world, hero, input),
+      game: new Game(renderer, scene, view, world, hero, input, this.look),
       debug: new DebugProbe(hero, buildings),
     };
   }

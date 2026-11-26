@@ -1,5 +1,6 @@
 import type { Scene, WebGLRenderer } from 'three';
 import type { QuarterCamera } from '../render/camera';
+import type { FrameLook } from '../render/look';
 import type { OcclusionTarget, Updatable } from './capabilities';
 import type { ZoomInput } from './input';
 
@@ -9,7 +10,7 @@ const ZOOM_STEP = 0.8;
 const MAX_FRAME_SECONDS = 0.05;
 
 /**
- * 게임의 박자를 맡는다. 매 프레임 월드를 한 걸음 진행시키고, 카메라를 주인공에게 맞추고, 화면을 그린다.
+ * 게임의 박자를 맡는다. 매 프레임 월드를 한 걸음 진행시키고, 카메라를 주인공에게 맞추고, 화면 느낌(look)에 그리기를 맡긴다.
  * 월드 안에 무엇이 있는지는 알지 못한다.
  */
 export class Game {
@@ -23,7 +24,9 @@ export class Game {
     private readonly world: Updatable,
     private readonly focus: Pick<OcclusionTarget, 'position'>,
     private readonly zoom: ZoomInput,
+    private readonly look: FrameLook,
   ) {
+    this.look.attach(this.scene);
     window.addEventListener('resize', this.resize);
     this.resize();
     this.view.follow(this.focus.position, 0, true);
@@ -45,7 +48,8 @@ export class Game {
     const dt = Math.min(MAX_FRAME_SECONDS, (now - this.lastTime) / 1000);
     this.lastTime = now;
     this.update(dt);
-    this.renderer.render(this.scene, this.view.camera);
+    this.look.track(this.view.camera, this.view.focus);
+    this.look.render(this.renderer, this.scene, this.view.camera);
     requestAnimationFrame(this.frame);
   };
 
@@ -62,5 +66,6 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(width, height, false);
     this.view.resize(width, height);
+    this.look.setSize(width, height, this.renderer.getPixelRatio());
   };
 }

@@ -1,17 +1,6 @@
-import {
-  Box3,
-  Group,
-  Mesh,
-  PlaneGeometry,
-  Raycaster,
-  Vector3,
-  type Intersection,
-  type Material,
-  type Object3D,
-  type Texture,
-} from 'three';
+import { Box3, Group, Mesh, Raycaster, Vector3, type Intersection, type Object3D } from 'three';
 import type { BuildingPlacement } from '../../data/town';
-import { ORDER, type BuildingLook } from '../../render/look';
+import { ORDER, type BuildingLook, type BuildingSkin } from '../../render/look';
 import type { Obstacle, Occluder, OcclusionTarget } from '../capabilities';
 import type { Footprint } from '../logic/movement';
 import { approach, isOccluded, type Box3D } from '../logic/occlusion';
@@ -29,9 +18,10 @@ export class Building extends Entity implements Obstacle, Occluder {
   readonly footprint: Footprint;
 
   private readonly box: Box3D;
-  private readonly colorMeshes: Mesh[] = [];
+  private readonly skin: BuildingSkin;
+  private readonly bodyMeshes: Mesh[] = [];
+  private readonly drawnMeshes: Mesh[] = [];
   private readonly depthMeshes: Mesh[] = [];
-  private readonly materials: Material[] = [];
   private readonly raycaster = new Raycaster();
   // 매번 새로 만들지 않고 다시 쓰는 계산용 객체.
   private readonly rayOrigin = new Vector3();
@@ -39,6 +29,7 @@ export class Building extends Entity implements Obstacle, Occluder {
   private readonly hits: Intersection[] = [];
   private occluding = false;
   private currentOpacity = 1;
+  private faded = false;
 
   constructor(
     model: Object3D,
@@ -47,19 +38,20 @@ export class Building extends Entity implements Obstacle, Occluder {
   ) {
     super(new Group());
 
-    const depthMaterial = look.depthOnlyMaterial();
+    // 겉모습을 입히기 전의 메시가 건물의 몸체다. 입힌 뒤에는 외곽선 같은 덧메시가 더 생길 수 있다.
     model.traverse((node) => {
-      if (!(node instanceof Mesh)) return;
-      const original = node.material as { map?: Texture | null };
-      const material = look.buildingMaterial(original.map ?? null);
-      node.material = material;
-      this.materials.push(material);
-      this.colorMeshes.push(node);
+      if (node instanceof Mesh) this.bodyMeshes.push(node);
     });
-    for (const mesh of this.colorMeshes) {
+    this.skin = look.dress(model);
+    model.traverse((node) => {
+      if (node instanceof Mesh) this.drawnMeshes.push(node);
+    });
+    const depthMaterial = look.depthOnlyMaterial();
+    for (const mesh of this.bodyMeshes) {
       const depth = new Mesh(mesh.geometry, depthMaterial);
       depth.renderOrder = ORDER.fadedDepth;
       depth.visible = false;
+      depth.raycast = () => {};
       mesh.add(depth);
       this.depthMeshes.push(depth);
     }
@@ -89,13 +81,9 @@ export class Building extends Entity implements Obstacle, Occluder {
       maxZ: world.max.z - depth * FOOTPRINT_SHRINK,
     };
 
-    const contactGeometry = new PlaneGeometry(1, 1);
-    contactGeometry.rotateX(-Math.PI / 2);
-    const contact = new Mesh(contactGeometry, look.contactShadowMaterial());
-    contact.scale.set(width * 1.45, 1, depth * 1.45);
-    contact.position.set(placement.x, 0.015, placement.z);
-    contact.renderOrder = ORDER.shadow;
-    this.root.add(contact);
+    this.root.add(
+      look.groundShadow({ x: placement.x, z: placement.z, width, depth, height: world.max.y - world.min.y }),
+    );
   }
 
   get opacity(): number {
@@ -110,7 +98,7 @@ export class Building extends Entity implements Obstacle, Occluder {
     for (const y of occlusionHeights) {
       this.raycaster.set(this.rayOrigin.set(position.x, y, position.z), this.rayDirection);
       this.hits.length = 0;
-      if (this.raycaster.intersectObjects(this.colorMeshes, false, this.hits).length > 0) return true;
+      if (this.raycaster.intersectObjects(this.bodyMeshes, false, this.hits).length > 0) return true;
     }
     return false;
   }
@@ -123,9 +111,11 @@ export class Building extends Entity implements Obstacle, Occluder {
     const target = this.occluding ? this.look.fadedOpacity : 1;
     if (this.currentOpacity === target) return;
     this.currentOpacity = approach(this.currentOpacity, target, dt, this.look.fadeRate);
-    const faded = this.currentOpacity < 0.999;
-    for (const material of this.materials) this.look.applyFade(material, this.currentOpacity);
-    for (const mesh of this.colorMeshes) mesh.renderOrder = faded ? ORDER.fadedColor : 0;
+    this.skin.setOpacity(this.currentOpacity);
+    const faded = this.currentOpacity < 1;
+    if (faded === this.faded) return;
+    this.faded = faded;
+    for (const mesh of this.drawnMeshes) mesh.renderOrder = faded ? ORDER.fadedColor : 0;
     for (const mesh of this.depthMeshes) mesh.visible = faded;
   }
 }

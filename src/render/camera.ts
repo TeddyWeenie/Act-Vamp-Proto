@@ -32,6 +32,11 @@ export class QuarterCamera implements GroundPicker {
     return this.lens;
   }
 
+  /** 카메라가 바라보는 지점. */
+  get focus(): Vector3 {
+    return this.target;
+  }
+
   resize(width: number, height: number): void {
     this.aspect = width / Math.max(1, height);
     this.apply();
