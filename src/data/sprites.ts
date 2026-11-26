@@ -87,7 +87,7 @@ const thrust = { frames: 6, fps: 12, loop: false } as const;
 const breath = { frames: 4, fps: 4.5, loop: true } as const;
 
 /**
- * 탑뷰용 리시엔. 어느 방향에서나 칼은 오른손에 든다. 그래서 어떤 그림도 뒤집지 않는다.
+ * 탑뷰용 리시엔(과장된 카툰 화풍). 어느 방향에서나 칼은 오른손에 든다. 그래서 어떤 그림도 뒤집지 않는다.
  * 왼쪽을 볼 때는 칼 든 손이 몸 건너편에, 오른쪽을 볼 때는 화면 앞쪽에 온다.
  * scale은 방향과 자세가 바뀌어도 머리 크기와 키가 튀지 않도록 맞춘 값이다.
  */
@@ -95,33 +95,33 @@ export const LUCIEN_CARDINAL: SpriteSheet<CardinalClip> = {
   height: 2.0,
   clips: {
     frontIdle: { url: lucienTop('front-idle'), faces: 'center', ...breath, scale: 1 },
-    frontWalk: { url: lucienTop('front-walk'), faces: 'center', ...walkLoop, scale: 1.02 },
+    frontWalk: { url: lucienTop('front-walk'), faces: 'center', ...walkLoop, scale: 1.05 },
     frontAttack: {
       url: lucienTop('front-attack'),
       faces: 'center',
       ...thrust,
-      scale: 1.17,
+      scale: 1.3,
       footMargin: 120,
     },
-    backIdle: { url: lucienTop('back-idle'), faces: 'center', ...breath, scale: 1.05 },
-    backWalk: { url: lucienTop('back-walk'), faces: 'center', ...walkLoop, scale: 1.05 },
-    backAttack: { url: lucienTop('back-attack'), faces: 'center', ...thrust, scale: 1.08 },
-    leftIdle: { url: lucienTop('left-idle'), faces: 'left', ...breath, scale: 0.99 },
-    leftWalk: { url: lucienTop('left-walk'), faces: 'left', ...walkLoop, scale: 0.9 },
+    backIdle: { url: lucienTop('back-idle'), faces: 'center', ...breath, scale: 1 },
+    backWalk: { url: lucienTop('back-walk'), faces: 'center', ...walkLoop, scale: 0.98 },
+    backAttack: { url: lucienTop('back-attack'), faces: 'center', ...thrust, scale: 1.03 },
+    leftIdle: { url: lucienTop('left-idle'), faces: 'left', ...breath, scale: 1 },
+    leftWalk: { url: lucienTop('left-walk'), faces: 'left', ...walkLoop, scale: 0.95 },
     leftAttack: {
       url: lucienTop('left-attack'),
       faces: 'left',
       ...thrust,
-      scale: 1.03,
+      scale: 0.94,
       cellAspect: 680 / CELL,
     },
-    rightIdle: { url: lucienTop('right-idle'), faces: 'right', ...breath, scale: 1.05 },
-    rightWalk: { url: lucienTop('right-walk'), faces: 'right', ...walkLoop, scale: 0.91 },
+    rightIdle: { url: lucienTop('right-idle'), faces: 'right', ...breath, scale: 1 },
+    rightWalk: { url: lucienTop('right-walk'), faces: 'right', ...walkLoop, scale: 0.98 },
     rightAttack: {
       url: lucienTop('right-attack'),
       faces: 'right',
       ...thrust,
-      scale: 0.98,
+      scale: 1.07,
       cellAspect: 680 / CELL,
     },
   },

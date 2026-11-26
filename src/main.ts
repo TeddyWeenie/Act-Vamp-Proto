@@ -3,8 +3,9 @@ import { GameFactory } from './game/GameFactory';
 import { QuarterStaging } from './game/staging/QuarterStaging';
 import type { Staging } from './game/staging/Staging';
 import { TopStaging } from './game/staging/TopStaging';
-import { CartoonSceneLook } from './render/CartoonSceneLook';
+import { boldCartoonLook, softCartoonLook } from './render/cartoonStyles';
 import { FlatLook } from './render/FlatLook';
+import type { SceneLook } from './render/look';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const loading = document.querySelector<HTMLElement>('#loading')!;
@@ -12,8 +13,8 @@ const loading = document.querySelector<HTMLElement>('#loading')!;
 const params = new URLSearchParams(location.search);
 // 기본은 비스듬한 탑뷰 50도. &pitch=45처럼 내려다보는 각도를 바꿔 볼 수 있고, ?view=quarter를 붙이면 예전 45도 쿼터뷰로 비교해 볼 수 있다.
 const staging = createStaging(params);
-// 기본은 카툰 화면. 주소에 ?look=flat을 붙이면 꾸밈 없는 화면으로 비교해 볼 수 있다.
-const look = params.get('look') === 'flat' ? new FlatLook() : new CartoonSceneLook(staging.heroHeight);
+// 기본은 과장된 카툰 화면. 주소에 ?look=soft를 붙이면 처음의 차분한 카툰 화면, ?look=flat을 붙이면 꾸밈 없는 화면으로 비교해 볼 수 있다.
+const look = createLook(params.get('look'), staging.heroHeight);
 
 new GameFactory(canvas, look, staging)
   .create()
@@ -28,6 +29,12 @@ new GameFactory(canvas, look, staging)
     console.error(error);
     loading.textContent = '불러오지 못했어요. 새로 고침해 주세요.';
   });
+
+function createLook(name: string | null, heroHeight: number): SceneLook {
+  if (name === 'flat') return new FlatLook();
+  if (name === 'soft') return softCartoonLook(heroHeight);
+  return boldCartoonLook(heroHeight);
+}
 
 function createStaging(query: URLSearchParams): Staging {
   if (query.get('view') === 'quarter') return new QuarterStaging();
