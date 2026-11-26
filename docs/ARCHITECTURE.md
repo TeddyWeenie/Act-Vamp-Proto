@@ -26,9 +26,10 @@ src/
     look.ts                화면 느낌의 약속(SceneLook)과 공통 뼈대(BaseLook)
     FlatLook.ts            꾸밈 없는 화면
     CartoonSceneLook.ts    카툰 화면. cartoon 모듈을 게임의 약속에 맞춰 잇는다
-    cartoonStyles.ts       카툰 화면의 화풍별 수치 묶음: 과장된 카툰(기본), 차분한 카툰
-    shape.ts               건물 형태를 다듬는 방법(ModelShaper): PlainShaper, WonkyShaper
-    shapeMath.ts           정점 하나를 옮기는 계산(순수 함수)
+    cartoonStyles.ts       카툰 화면의 묶음: 주인공 색감에 맞춘 화면(기본), 지붕까지 맞춘 화면, 색을 옮기기 전 화면
+    treatment.ts           불러온 모델을 손보는 방법(ModelTreatment): NoTreatment, TextureRepaint
+    colorMath.ts           색 공간 변환과 색 계열 옮기기(ColorMap, PaletteSwap). 계산만 한다
+    ColorLut.ts            색 옮기기를 미리 계산해 둔 표. 텍스처 화소를 빠르게 다시 칠한다
     cartoon/               카툰 렌더링 모듈(명암, 외곽선, 색 평탄화, 조명, 색 보정). 수치는 settings.ts
 tests/                     단위 테스트
 ```
@@ -61,9 +62,12 @@ BaseLook (추상)
 ├─ FlatLook            조명과 후처리 없는 화면
 └─ CartoonSceneLook    카툰 화면(기본)
 
-ModelShaper (인터페이스)
-├─ PlainShaper         형태를 그대로 둔다
-└─ WonkyShaper         위가 넓어지고 기울고 지붕 끝이 처지게 한다
+ModelTreatment (인터페이스)
+├─ NoTreatment         모델을 그대로 둔다
+└─ TextureRepaint      텍스처 색을 표(ColorLut)대로 다시 칠한다
+
+ColorMap (인터페이스)
+└─ PaletteSwap         색 계열을 짝(from → to)대로 옮긴다
 ```
 
 볼프와 에다, 마을 사람, 적은 `Character`를 상속해 `clipFor`만 구현하면 됩니다.
@@ -73,7 +77,7 @@ ModelShaper (인터페이스)
 - **행동 상태**: `Character`는 지금 상태의 `update`를 부를 뿐이고, 대기·걷기·공격이 각자 다르게 움직이며 다음 상태를 돌려줍니다. 피격, 시전, 쓰러짐은 상태 클래스를 더하면 됩니다.
 - **조종**: `MoveSource`를 구현한 `KeyboardMove`와 `PointerMove`를 `PlayerController`가 우선순위대로 묶습니다. 길 찾기나 AI도 같은 인터페이스로 들어옵니다.
 - **화면 느낌**: `SceneLook`을 구현한 `CartoonSceneLook`(기본)과 `FlatLook`을 갈아 끼웁니다. 건물은 `look.dress(model)`로 겉모습을 입고 불투명도만 알려 주며, `Game`은 `look.render(...)`에 그리기를 맡깁니다. 주소에 `?look=flat`을 붙이면 꾸밈 없는 화면으로 바뀝니다.
-- **건물 형태**: `CartoonSceneLook`은 수치(`CartoonSettings`)와 형태를 다듬는 방법(`ModelShaper`)을 생성자로 넘겨받습니다. 과장된 카툰(`boldCartoonLook`, 기본)은 `WonkyShaper`를, 차분한 카툰(`softCartoonLook`, `?look=soft`)은 `PlainShaper`를 씁니다. 새 화풍은 `cartoonStyles.ts`에 묶음을 하나 더하면 되고 `CartoonSceneLook`은 고치지 않습니다.
+- **건물 색 맞추기**: `CartoonSceneLook`은 수치(`CartoonSettings`)와 모델을 손보는 방법(`ModelTreatment`)을 생성자로 넘겨받습니다. 기본 화면(`heroToneLook`)은 `TextureRepaint`로 건물 텍스처를 주인공 색 계열로 다시 칠하고, `?look=soft`(`softCartoonLook`)는 `NoTreatment`를 씁니다. `TextureRepaint`는 색을 어떻게 옮기는지 모르고 `ColorLut`만 알며, `ColorLut`은 `ColorMap` 약속만 압니다. 색 짝은 `data/palettes.ts`에 있어서 새 묶음은 `cartoonStyles.ts`에 함수 하나를 더하면 됩니다.
 - **카메라 구도**: `Staging`을 구현한 `TopStaging`(기본, 비스듬한 탑뷰 50도)과 `QuarterStaging`(예전 45도 쿼터뷰, 비교용)을 갈아 끼웁니다. 구도마다 카메라 각도, 그 각도에 맞게 그린 주인공, 보기 좋은 마을 배치가 함께 바뀌므로 한 묶음으로 둡니다. 주소에 `?view=quarter`를 붙이면 쿼터뷰로 바뀝니다.
 - **방향 정하기**: `FacingRule`을 구현한 `DiagonalFacing`(앞 3/4·뒤 3/4 두 그림)과 `CardinalFacing`(앞·뒤·왼쪽·오른쪽 네 그림)을 캐릭터가 넘겨받아 씁니다. 그림 이름을 고르는 일은 `Hero`와 `CardinalHero`가 각자 `clipFor`로 맡습니다.
 - **월드**: 모든 `Entity`를 한 줄로 세워 같은 `update`를 부릅니다.
@@ -124,5 +128,5 @@ ModelShaper (인터페이스)
 ## 카툰 렌더링 모듈
 
 `src/render/cartoon/`은 모델 뷰어에서 수치를 맞춘 카툰 렌더링 모듈을 그대로 가져온 것입니다(설명은 그 폴더의 README).
-게임 코드는 이 모듈을 직접 부르지 않고 `CartoonSceneLook`을 거칩니다. 게임에서 쓰는 수치는 모듈 밖 `render/cartoonStyles.ts`에서 `withCartoonSettings`로 덮어쓰고,
+게임 코드는 이 모듈을 직접 부르지 않고 `CartoonSceneLook`을 거칩니다. 게임에 맞춘 묶음은 모듈 밖 `render/cartoonStyles.ts`에서 만들고,
 모듈을 새 판으로 바꿀 때는 폴더를 통째로 교체합니다. 이 폴더는 원본과 비교하기 쉽도록 prettier 대상에서 뺐습니다.

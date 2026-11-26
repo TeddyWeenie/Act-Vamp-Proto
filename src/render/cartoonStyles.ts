@@ -1,27 +1,29 @@
+import { HERO_ROOF_SWAPS, HERO_TONE_SWAPS } from '../data/palettes';
 import { CartoonSceneLook } from './CartoonSceneLook';
-import { DEFAULT_CARTOON_SETTINGS, withCartoonSettings } from './cartoon';
-import { PlainShaper, WonkyShaper } from './shape';
-import type { WonkyAmounts } from './shapeMath';
+import { DEFAULT_CARTOON_SETTINGS } from './cartoon';
+import { ColorLut } from './ColorLut';
+import { PaletteSwap, type ColorSwap, type SwapOptions } from './colorMath';
+import { NoTreatment, TextureRepaint } from './treatment';
 
-/**
- * 과장된 카툰 캐릭터 그림에 맞춘 건물 수치. 외곽선은 캐릭터 그림의 선 굵기에 맞추고,
- * 색은 더 적은 단계로 평평하게 모으고 채도를 올린다.
- */
-const BOLD_SETTINGS = withCartoonSettings({
-  shade: { ...DEFAULT_CARTOON_SETTINGS.shade, ambientIntensity: 0.72 * Math.PI },
-  outline: { ...DEFAULT_CARTOON_SETTINGS.outline, width: 0.02 },
-  flatten: { ...DEFAULT_CARTOON_SETTINGS.flatten, levels: 3, strength: 0.9, saturation: 1.2 },
-  grade: { ...DEFAULT_CARTOON_SETTINGS.grade, saturation: 1.06, contrast: 0.14 },
-});
+/** 건물 색 계열끼리 섞이지 않을 만큼 좁게, 같은 색의 밝은 곳과 그늘은 함께 잡히게 한 값. */
+const SWAP_OPTIONS: SwapOptions = { reach: 0.05, lightnessWeight: 0.35 };
 
-const BOLD_SHAPE: WonkyAmounts = { flare: 0.1, pinch: 0.05, lean: [0.05, 0.02], sag: 0.04 };
-
-/** 과장된 카툰 화면(기본): 굵은 선, 평평하고 선명한 색, 살짝 과장한 건물 형태. */
-export function boldCartoonLook(characterHeight: number): CartoonSceneLook {
-  return new CartoonSceneLook(characterHeight, BOLD_SETTINGS, new WonkyShaper(BOLD_SHAPE));
+function repainted(characterHeight: number, swaps: readonly ColorSwap[]): CartoonSceneLook {
+  const lut = new ColorLut(new PaletteSwap(swaps, SWAP_OPTIONS));
+  return new CartoonSceneLook(characterHeight, DEFAULT_CARTOON_SETTINGS, new TextureRepaint(lut));
 }
 
-/** 처음 맞춘 차분한 카툰 화면. 비교용으로 남겨 둔다. */
+/** 기본 화면: 건물의 나무, 벽, 돌 색을 주인공 그림의 색 계열로 옮긴다. 형태와 지붕 색은 그대로다. */
+export function heroToneLook(characterHeight: number): CartoonSceneLook {
+  return repainted(characterHeight, HERO_TONE_SWAPS);
+}
+
+/** 지붕까지 주인공 코트의 진홍으로 옮긴 화면. */
+export function heroColorLook(characterHeight: number): CartoonSceneLook {
+  return repainted(characterHeight, [...HERO_TONE_SWAPS, ...HERO_ROOF_SWAPS]);
+}
+
+/** 색을 옮기기 전의 카툰 화면. 비교용으로 남겨 둔다. */
 export function softCartoonLook(characterHeight: number): CartoonSceneLook {
-  return new CartoonSceneLook(characterHeight, DEFAULT_CARTOON_SETTINGS, new PlainShaper());
+  return new CartoonSceneLook(characterHeight, DEFAULT_CARTOON_SETTINGS, new NoTreatment());
 }
