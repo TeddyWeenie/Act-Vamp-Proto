@@ -19,6 +19,8 @@ export interface Staging {
   readonly angle: ViewAngle;
   readonly town: readonly BuildingPlacement[];
   readonly bounds: Bounds;
+  /** 처음에 화면 세로에 들어오는 월드 길이. 클수록 멀리서 보고, 캐릭터가 작게 보인다. */
+  readonly viewHeight: number;
   /** 주인공의 월드 키. 화면 느낌이 선 굵기와 그림자 크기를 맞출 때 쓴다. */
   readonly heroHeight: number;
   createHero(

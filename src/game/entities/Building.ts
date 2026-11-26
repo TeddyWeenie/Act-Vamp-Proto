@@ -82,7 +82,13 @@ export class Building extends Entity implements Obstacle, Occluder {
     };
 
     this.root.add(
-      look.groundShadow({ x: placement.x, z: placement.z, width, depth, height: world.max.y - world.min.y }),
+      look.groundShadow({
+        x: placement.x,
+        z: placement.z,
+        width: this.footprint.maxX - this.footprint.minX,
+        depth: this.footprint.maxZ - this.footprint.minZ,
+        height: world.max.y - world.min.y,
+      }),
     );
   }
 

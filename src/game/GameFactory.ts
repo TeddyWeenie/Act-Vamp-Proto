@@ -42,8 +42,8 @@ export class GameFactory {
     renderer.outputColorSpace = SRGBColorSpace;
     const scene = new Scene();
 
-    const { angle, town, bounds } = this.staging;
-    const view = new QuarterCamera(angle);
+    const { angle, town, bounds, viewHeight } = this.staging;
+    const view = new QuarterCamera(angle, viewHeight);
     const input = new DomInput(this.canvas);
     const collisions = new CollisionMap(bounds);
     const occlusion = new OcclusionSystem(towardCamera(angle.elevation, angle.azimuth));

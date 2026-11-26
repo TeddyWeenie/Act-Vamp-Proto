@@ -27,18 +27,20 @@ export const TOWN: readonly BuildingPlacement[] = [
 /**
  * 비스듬한 탑뷰용 배치. 북쪽 줄은 정면이 화면을 보고, 동서의 집은 광장을 보고,
  * 남쪽 줄은 뒷모습과 지붕이 보인다. 남쪽 줄 바로 위를 지나가면 건물이 캐릭터를 가린다.
+ * 집 높이는 문이 캐릭터 키와 비슷해지도록 잡았다. 캐릭터가 문보다 크면 그림을 오려 붙인 것처럼 보인다.
  */
 export const TOWN_TOP: readonly BuildingPlacement[] = [
-  { model: HOUSE, x: -6.4, z: -5.2, quarterTurns: 0, height: 4.3 },
-  { model: HOUSE, x: -2.2, z: -5.6, quarterTurns: 0, height: 4.1 },
-  { model: HOUSE, x: 2.0, z: -5.2, quarterTurns: 0, height: 4.5 },
-  { model: HOUSE, x: 6.2, z: -5.6, quarterTurns: 0, height: 4.1 },
-  { model: HOUSE, x: -8.4, z: 0.2, quarterTurns: 1, height: 4.1 },
-  { model: HOUSE, x: 8.4, z: 0.6, quarterTurns: 3, height: 4.3 },
-  { model: HOUSE, x: -3.6, z: 5.6, quarterTurns: 2, height: 4.3 },
-  { model: HOUSE, x: 3.4, z: 5.2, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: -11.4, z: -8.6, quarterTurns: 0, height: 7.6 },
+  { model: HOUSE, x: -3.8, z: -9.0, quarterTurns: 0, height: 7.2 },
+  { model: HOUSE, x: 3.8, z: -8.6, quarterTurns: 0, height: 8.0 },
+  { model: HOUSE, x: 11.4, z: -9.0, quarterTurns: 0, height: 7.2 },
+  { model: HOUSE, x: -14.6, z: 0.4, quarterTurns: 1, height: 7.2 },
+  { model: HOUSE, x: 14.6, z: 1.0, quarterTurns: 3, height: 7.6 },
+  { model: HOUSE, x: -6.2, z: 10.0, quarterTurns: 2, height: 7.6 },
+  { model: HOUSE, x: 6.0, z: 9.6, quarterTurns: 0, height: 7.2 },
 ];
 
 export const TOWN_BOUNDS: Bounds = { minX: -12, maxX: 12, minZ: -12, maxZ: 12 };
+export const TOWN_TOP_BOUNDS: Bounds = { minX: -20, maxX: 20, minZ: -20, maxZ: 20 };
 
 export const PLAYER_START = { x: 0, z: 0 };

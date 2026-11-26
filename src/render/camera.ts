@@ -4,8 +4,9 @@ import { VIEW, towardCamera, type Vec2, type ViewAngle } from '../game/logic/vie
 
 const DISTANCE = 60;
 const FOLLOW_RATE = 6;
-const MIN_VIEW_HEIGHT = 6;
-const MAX_VIEW_HEIGHT = 14;
+/** 처음 거리에 견주어 얼마나 당기고 밀 수 있는지. */
+const MIN_ZOOM = 0.6;
+const MAX_ZOOM = 1.5;
 
 /** 정해진 각도로 내려다보는 고정 시점 카메라. 각도는 처음에 받은 그대로이고 대상만 따라간다. */
 export class QuarterCamera implements GroundPicker {
@@ -17,11 +18,17 @@ export class QuarterCamera implements GroundPicker {
   // 매번 새로 만들지 않고 다시 쓰는 계산용 벡터.
   private readonly pointer = new Vector2();
   private readonly hit = new Vector3();
-  /** 화면 세로에 들어오는 월드 길이. 작을수록 확대된다. */
-  private viewHeight = 8.6;
+  private readonly minViewHeight: number;
+  private readonly maxViewHeight: number;
   private aspect = 16 / 9;
 
-  constructor(angle: ViewAngle = VIEW) {
+  /** viewHeight: 화면 세로에 들어오는 월드 길이. 작을수록 확대된다. */
+  constructor(
+    angle: ViewAngle = VIEW,
+    private viewHeight = 8.6,
+  ) {
+    this.minViewHeight = viewHeight * MIN_ZOOM;
+    this.maxViewHeight = viewHeight * MAX_ZOOM;
     const dir = towardCamera(angle.elevation, angle.azimuth);
     this.offset = new Vector3(dir.x, dir.y, dir.z).multiplyScalar(DISTANCE);
     this.apply();
@@ -43,7 +50,7 @@ export class QuarterCamera implements GroundPicker {
   }
 
   zoom(delta: number): void {
-    this.viewHeight = Math.max(MIN_VIEW_HEIGHT, Math.min(MAX_VIEW_HEIGHT, this.viewHeight + delta));
+    this.viewHeight = Math.max(this.minViewHeight, Math.min(this.maxViewHeight, this.viewHeight + delta));
     this.apply();
   }
 

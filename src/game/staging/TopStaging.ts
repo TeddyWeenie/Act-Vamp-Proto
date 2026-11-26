@@ -1,6 +1,6 @@
 import { LUCIEN_BODY } from '../../data/characters';
 import { LUCIEN_CARDINAL } from '../../data/sprites';
-import { PLAYER_START, TOWN_BOUNDS, TOWN_TOP } from '../../data/town';
+import { PLAYER_START, TOWN_TOP, TOWN_TOP_BOUNDS } from '../../data/town';
 import type { CollisionSpace } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import { CardinalHero } from '../entities/CardinalHero';
@@ -16,7 +16,9 @@ import type { SpriteSource, Staging } from './Staging';
 export class TopStaging implements Staging {
   readonly angle: ViewAngle;
   readonly town = TOWN_TOP;
-  readonly bounds = TOWN_BOUNDS;
+  readonly bounds = TOWN_TOP_BOUNDS;
+  /** 캐릭터가 화면 높이의 1/10쯤으로 보이는 거리. 건물과 한 그림으로 읽히게 한다. */
+  readonly viewHeight = 13.5;
   readonly heroHeight = LUCIEN_CARDINAL.height;
 
   /** elevationDegrees: 카메라가 지면에서 올라간 각도. 클수록 지붕이 많이 보이고 벽이 적게 보인다. */

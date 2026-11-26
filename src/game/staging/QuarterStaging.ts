@@ -14,6 +14,7 @@ export class QuarterStaging implements Staging {
   readonly angle = QUARTER_VIEW;
   readonly town = TOWN;
   readonly bounds = TOWN_BOUNDS;
+  readonly viewHeight = 8.6;
   readonly heroHeight = LUCIEN.height;
 
   async createHero(

@@ -25,7 +25,7 @@ export interface BuildingSkin {
   setOpacity(opacity: number): void;
 }
 
-/** 건물이 땅에서 차지하는 자리. 바닥 그림자를 만들 때 쓴다. */
+/** 건물의 벽이 땅에서 차지하는 자리(처마는 뺀다)와 건물 높이. 바닥 그림자를 만들 때 쓴다. */
 export interface GroundArea {
   readonly x: number;
   readonly z: number;
@@ -79,10 +79,10 @@ export interface SceneLook extends SpriteLook, BuildingLook, GroundLook, FrameLo
 export abstract class BaseLook implements SceneLook {
   readonly fadedOpacity = 0.3;
   readonly fadeRate = 9;
-  readonly groundTileSize = 7;
+  /** 바닥 그림 한 장에 돌이 가로로 열여덟 개쯤 들어 있어서, 돌 하나가 캐릭터 키의 1/4쯤 되는 크기다. */
+  readonly groundTileSize = 10;
 
   protected readonly background = new Color(0x241d2e);
-  private readonly groundTint = new Color(0xd9d2e0);
 
   spriteMaterial(map: Texture): MeshBasicMaterial {
     return new MeshBasicMaterial({ map, transparent: true, alphaTest: 0.02, side: DoubleSide });
@@ -96,7 +96,7 @@ export abstract class BaseLook implements SceneLook {
   }
 
   groundMaterial(map: Texture): Material {
-    return new MeshBasicMaterial({ map, color: this.groundTint });
+    return new MeshBasicMaterial({ map });
   }
 
   attach(scene: Scene): void {
