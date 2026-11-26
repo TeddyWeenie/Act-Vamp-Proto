@@ -70,6 +70,7 @@ BaseLook (추상)
 
 - 필드는 모두 `private`이고, 밖에서 필요한 값만 읽기 전용 getter로 내놓습니다(`Character.position`, `Building.opacity`, `PointerMove.destination`).
 - 상태 클래스는 `CharacterActions`라는 좁은 창구로만 캐릭터를 다룹니다. 캐릭터의 스프라이트나 충돌 공간을 직접 만지지 못합니다.
+- 캐릭터는 "왼쪽을 본다"는 사실만 스프라이트에 알립니다(`SpriteAnimator.faceLeft`). 그림이 원래 어느 쪽을 보고 그려졌는지(`SpriteClip.faces`)와 실제로 뒤집을지는 `SpriteView`만 압니다. 그림을 다시 그려 방향이 바뀌어도 표의 값 하나만 고치면 됩니다.
 - 모델 캐시(`ModelLibrary`)와 그림자 텍스처(`FlatLook`)처럼 함께 쓰는 자원은 전역 변수가 아니라 맡은 객체 안에 둡니다.
 
 ## SOLID

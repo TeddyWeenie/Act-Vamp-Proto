@@ -11,14 +11,14 @@ class FakeSprite implements SpriteAnimator<HeroClip> {
   readonly root = new Group();
   clip: HeroClip = 'idle';
   finished = false;
-  flip = false;
+  left = false;
   restarts = 0;
   play(clip: HeroClip, restart = false): void {
     this.clip = clip;
     if (restart) this.restarts++;
   }
-  setFlip(flip: boolean): void {
-    this.flip = flip;
+  faceLeft(left: boolean): void {
+    this.left = left;
   }
   setPosition(x: number, z: number): void {
     this.root.position.set(x, 0, z);
@@ -125,6 +125,33 @@ describe('주인공의 행동 상태', () => {
     controller.intent = null;
     tick();
     expect(sprite.clip).toBe('idle');
+  });
+
+  it('뒤를 보고 있을 때 공격하면 뒷모습 공격 그림을 쓰고, 보던 쪽을 그대로 본다', () => {
+    const { sprite, controller, tick } = setup();
+    controller.intent = AWAY_FROM_CAMERA;
+    tick(3);
+    const lookingLeft = sprite.left;
+    controller.attack = true;
+    tick(2);
+    expect(sprite.clip).toBe('backAttack');
+    expect(sprite.left).toBe(lookingLeft);
+
+    sprite.finished = true;
+    controller.intent = null;
+    tick();
+    expect(sprite.clip).toBe('backIdle');
+  });
+
+  it('왼쪽으로 걷다가 공격하면 왼쪽을 본 채로 공격한다', () => {
+    const { sprite, controller, tick } = setup();
+    controller.intent = { dir: { x: -Math.SQRT1_2, z: Math.SQRT1_2 }, maxDistance: Infinity };
+    tick(3);
+    expect(sprite.left).toBe(true);
+    controller.attack = true;
+    tick(2);
+    expect(sprite.clip).toBe('attack');
+    expect(sprite.left).toBe(true);
   });
 
   it('바로 옮기면 진행 중인 이동 계획도 버린다', () => {

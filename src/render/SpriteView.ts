@@ -17,7 +17,7 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
   private readonly cellWidth: number;
   private current: Name;
   private time = 0;
-  private flip = false;
+  private left = false;
   private shownFrame = -1;
 
   constructor(
@@ -60,9 +60,9 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     this.apply();
   }
 
-  setFlip(flip: boolean): void {
-    if (flip === this.flip) return;
-    this.flip = flip;
+  faceLeft(left: boolean): void {
+    if (left === this.left) return;
+    this.left = left;
     this.shownFrame = -1;
     this.apply();
   }
@@ -83,9 +83,14 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     if (frame === this.shownFrame) return;
     this.shownFrame = frame;
     const texture = this.textures[this.current];
-    // 좌우 반전은 텍스처 좌표를 거꾸로 읽어서 처리한다.
-    texture.repeat.set((this.flip ? -1 : 1) / clip.frames, 1);
-    texture.offset.set((frame + (this.flip ? 1 : 0)) / clip.frames, 0);
-    this.mesh.scale.set(this.cellWidth * clip.scale, this.cellHeight * clip.scale, 1);
+    // 그림이 원래 보는 쪽과 지금 봐야 하는 쪽이 다를 때만 뒤집는다. 반전은 텍스처 좌표를 거꾸로 읽어서 처리한다.
+    const mirrored = this.left !== (clip.faces === 'left');
+    texture.repeat.set((mirrored ? -1 : 1) / clip.frames, 1);
+    texture.offset.set((frame + (mirrored ? 1 : 0)) / clip.frames, 0);
+    this.mesh.scale.set(
+      this.cellWidth * clip.scale * (clip.cellAspect ?? 1),
+      this.cellHeight * clip.scale,
+      1,
+    );
   }
 }

@@ -7,8 +7,7 @@ import type { Pose } from '../states/characterStates';
 import { Character, type CharacterBody } from './Character';
 
 /**
- * 주인공. 앞모습과 뒷모습 그림을 모두 가지고 있어 걷는 방향에 따라 골라 쓴다.
- * 공격 그림은 앞모습만 있다.
+ * 주인공. 모든 자세에 앞모습과 뒷모습 그림이 있어, 바라보는 방향에 맞는 쪽을 골라 쓴다.
  */
 export class Hero extends Character<HeroClip> {
   constructor(
@@ -22,7 +21,7 @@ export class Hero extends Character<HeroClip> {
   }
 
   protected clipFor(pose: Pose, facing: Readonly<Facing>): HeroClip {
-    if (pose === 'attack') return 'attack';
+    if (pose === 'attack') return facing.back ? 'backAttack' : 'attack';
     if (pose === 'walk') return facing.back ? 'backWalk' : 'walk';
     return facing.back ? 'backIdle' : 'idle';
   }

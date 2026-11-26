@@ -55,7 +55,8 @@ export interface SpriteAnimator<Clip extends string> extends Updatable {
   /** 반복하지 않는 동작이 끝났는지. */
   readonly finished: boolean;
   play(clip: Clip, restart?: boolean): void;
-  setFlip(flip: boolean): void;
+  /** 화면 왼쪽을 보게 할지 오른쪽을 보게 할지. 그림을 뒤집을지는 구현이 그림의 원래 방향을 보고 정한다. */
+  faceLeft(left: boolean): void;
   setPosition(x: number, z: number): void;
 }
 

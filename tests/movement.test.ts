@@ -3,7 +3,7 @@ import { facingFromMove, pushOutOfFootprint, step, type Footprint } from '../src
 import { inputToGround } from '../src/game/logic/view';
 
 const house: Footprint = { minX: 2, maxX: 4, minZ: -1, maxZ: 1 };
-const front = { back: false, flip: false };
+const front = { back: false, left: false };
 
 describe('건물 충돌', () => {
   it('떨어져 있으면 그대로 둔다', () => {
@@ -46,34 +46,34 @@ describe('건물 충돌', () => {
 
 describe('스프라이트 방향', () => {
   it('화면 오른쪽 아래로 걸으면 원본 앞모습', () => {
-    expect(facingFromMove(inputToGround(1, -1), { back: true, flip: true })).toEqual({
+    expect(facingFromMove(inputToGround(1, -1), { back: true, left: true })).toEqual({
       back: false,
-      flip: false,
+      left: false,
     });
   });
 
   it('화면 왼쪽으로 걸으면 좌우를 뒤집는다', () => {
-    expect(facingFromMove(inputToGround(-1, -1), front)).toEqual({ back: false, flip: true });
+    expect(facingFromMove(inputToGround(-1, -1), front)).toEqual({ back: false, left: true });
   });
 
   it('화면 위쪽으로 걸으면 뒷모습', () => {
-    expect(facingFromMove(inputToGround(1, 1), front)).toEqual({ back: true, flip: false });
-    expect(facingFromMove(inputToGround(-1, 1), front)).toEqual({ back: true, flip: true });
+    expect(facingFromMove(inputToGround(1, 1), front)).toEqual({ back: true, left: false });
+    expect(facingFromMove(inputToGround(-1, 1), front)).toEqual({ back: true, left: true });
   });
 
   it('똑바로 위나 옆으로 걸을 때는 나머지 방향을 유지한다', () => {
-    expect(facingFromMove(inputToGround(0, 1), { back: false, flip: true })).toEqual({
+    expect(facingFromMove(inputToGround(0, 1), { back: false, left: true })).toEqual({
       back: true,
-      flip: true,
+      left: true,
     });
-    expect(facingFromMove(inputToGround(1, 0), { back: true, flip: true })).toEqual({
+    expect(facingFromMove(inputToGround(1, 0), { back: true, left: true })).toEqual({
       back: true,
-      flip: false,
+      left: false,
     });
   });
 
   it('멈춰 있으면 방향이 바뀌지 않는다', () => {
-    const previous = { back: true, flip: true };
+    const previous = { back: true, left: true };
     expect(facingFromMove({ x: 0, z: 0 }, previous)).toBe(previous);
   });
 });

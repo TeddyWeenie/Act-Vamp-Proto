@@ -71,12 +71,12 @@ export function step(
 export interface Facing {
   /** 화면 위쪽(카메라 반대편)으로 걷는 중이면 뒷모습. */
   back: boolean;
-  /** 원본 그림은 화면 오른쪽을 향한다. 왼쪽으로 갈 때 좌우를 뒤집는다. */
-  flip: boolean;
+  /** 화면 왼쪽을 바라보는 중이면 true, 오른쪽이면 false. */
+  left: boolean;
 }
 
 /**
- * 이동 방향에서 스프라이트 방향을 고른다. 앞 3/4과 뒤 3/4 두 장을 좌우 반전해 네 방향을 만든다.
+ * 이동 방향에서 스프라이트 방향을 고른다. 앞 3/4과 뒤 3/4 두 장을 좌우 반전해 네 방향을 만든다(반전 여부는 그림 쪽에서 정한다).
  * 거의 수직·수평으로 움직일 때 방향이 떨리지 않도록 이전 값을 유지하는 구간을 둔다.
  */
 export function facingFromMove(dir: Vec2, previous: Facing, deadZone = 0.18): Facing {
@@ -84,6 +84,6 @@ export function facingFromMove(dir: Vec2, previous: Facing, deadZone = 0.18): Fa
   if (Math.hypot(right, up) < 1e-6) return previous;
   return {
     back: Math.abs(up) < deadZone ? previous.back : up > 0,
-    flip: Math.abs(right) < deadZone ? previous.flip : right < 0,
+    left: Math.abs(right) < deadZone ? previous.left : right < 0,
   };
 }

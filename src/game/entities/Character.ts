@@ -36,7 +36,7 @@ export abstract class Character<Clip extends string>
 
   private state: CharacterState = CHARACTER_STATES.idle;
   private current: Vec2;
-  private direction: Facing = { back: false, flip: false };
+  private direction: Facing = { back: false, left: true };
 
   protected constructor(
     private readonly sprite: SpriteAnimator<Clip>,
@@ -94,7 +94,7 @@ export abstract class Character<Clip extends string>
       this.state = next;
       next.enter(this);
     }
-    this.sprite.setFlip(this.direction.flip);
+    this.sprite.faceLeft(this.direction.left);
     this.sprite.setPosition(this.current.x, this.current.z);
     this.sprite.update(dt);
   }

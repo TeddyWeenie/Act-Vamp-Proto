@@ -13,8 +13,24 @@ def runs(mask, min_gap, min_len):
     out.append((s, p + 1))
     return [r for r in out if r[1] - r[0] >= min_len]
 
+def lowest_foot_x(sub, x0):
+    """Centre of the lowest foot: the part of the figure that touches the ground first."""
+    h = sub.shape[0]
+    xs = np.where(sub[int(h * 0.95):].any(axis=0))[0]
+    runs = np.split(xs, np.where(np.diff(xs) > 6)[0] + 1)
+    run = max(runs, key=len)
+    return x0 + (run[0] + run[-1]) / 2
+
 def main():
+    """slice.py <sheet.png> <out prefix> <cols> <rows> <feet|head|planted|box> <gif ms> [cell width]
+
+    feet     centre both feet in the cell (standing, walking, side lunges)
+    planted  pin the lowest foot instead, for moves where one foot stays put while the body travels
+             (lunges seen from behind). Needs a wider cell: pass e.g. 768.
+    head     centre the head. box: centre the bounding box.
+    """
     src, out_prefix, cols, rows, anchor, ms = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5], int(sys.argv[6])
+    CELL_W = int(sys.argv[7]) if len(sys.argv) > 7 else 512
     im = Image.open(src).convert('RGBA'); W, H = im.size
     a = np.array(im)[..., 3] > 40
     info = {'src_size': [W, H], 'method': []}
@@ -46,28 +62,36 @@ def main():
             part = sub[:int(h * 0.35)]
         else:
             part = None
-        if part is None: ax = b[4]
+        if anchor == 'planted': ax = lowest_foot_x(sub, b[0])
+        elif part is None: ax = b[4]
         else:
             xs = np.where(part.any(axis=0))[0]; ax = b[0] + (xs[0] + xs[-1]) / 2
         anchors.append(ax)
+    if anchor == 'planted':
+        # Keep the first frame where a standing pose would be (midway between the feet), so the move
+        # does not jump sideways when it starts. Every frame gets the same shift.
+        b = boxes[0]; sub = a[b[1]:b[3], b[0]:b[2]]
+        xs = np.where(sub[int(sub.shape[0] * 0.78):].any(axis=0))[0]
+        shift = b[0] + (xs[0] + xs[-1]) / 2 - anchors[0]
+        anchors = [ax + shift for ax in anchors]
     ext = max(max(ax - b[0], b[2] - ax) for b, ax in zip(boxes, anchors))
-    scale = min((CELL - 48) / mh, (CELL / 2 - 6) / ext, 1.0)
-    info['scale'] = scale; info['max_h'] = int(mh)
+    scale = min((CELL - 48) / mh, (CELL_W / 2 - 6) / ext, 1.0)
+    info['scale'] = scale; info['max_h'] = int(mh); info['cell'] = [CELL_W, CELL]
     frames = []
     for b, ax in zip(boxes, anchors):
         crop = im.crop(b[:4]); w, h = crop.size
         nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
         crop = crop.resize((nw, nh), Image.LANCZOS)
-        cell = Image.new('RGBA', (CELL, CELL), (0, 0, 0, 0))
-        px = round(CELL / 2 - (ax - b[0]) * scale); py = CELL - 24 - nh
-        cell.alpha_composite(crop, (max(0, min(CELL - nw, px)), py)); frames.append(cell)
-    atlas = Image.new('RGBA', (CELL * len(frames), CELL), (0, 0, 0, 0))
-    for i, f in enumerate(frames): atlas.alpha_composite(f, (i * CELL, 0))
+        cell = Image.new('RGBA', (CELL_W, CELL), (0, 0, 0, 0))
+        px = round(CELL_W / 2 - (ax - b[0]) * scale); py = CELL - 24 - nh
+        cell.alpha_composite(crop, (max(0, min(CELL_W - nw, px)), py)); frames.append(cell)
+    atlas = Image.new('RGBA', (CELL_W * len(frames), CELL), (0, 0, 0, 0))
+    for i, f in enumerate(frames): atlas.alpha_composite(f, (i * CELL_W, 0))
     atlas.save(out_prefix + '-atlas.png')
     bgc = (112, 124, 110, 255)
     gifs = []
     for f in frames:
-        bg = Image.new('RGBA', (CELL, CELL), bgc); bg.alpha_composite(f); gifs.append(bg.convert('P', palette=Image.ADAPTIVE, colors=255))
+        bg = Image.new('RGBA', (CELL_W, CELL), bgc); bg.alpha_composite(f); gifs.append(bg.convert('P', palette=Image.ADAPTIVE, colors=255))
     gifs[0].save(out_prefix + '.gif', save_all=True, append_images=gifs[1:], duration=ms, loop=0, disposal=1)
     sheet = Image.new('RGBA', atlas.size, bgc); sheet.alpha_composite(atlas)
     # baseline guide
