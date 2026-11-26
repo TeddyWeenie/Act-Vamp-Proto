@@ -1,4 +1,4 @@
-import { groundToScreen, type Vec2 } from './view';
+import { VIEW, groundToScreen, type Vec2 } from './view';
 
 /** 건물이 지면에서 차지하는 축 정렬 사각형. */
 export interface Footprint {
@@ -73,17 +73,38 @@ export interface Facing {
   back: boolean;
   /** 화면 왼쪽을 바라보는 중이면 true, 오른쪽이면 false. */
   left: boolean;
+  /** 옆모습 그림을 쓰는 중이면 true. 앞·뒤·옆 그림을 따로 두는 4방향 방식에서만 쓴다. */
+  side?: boolean;
 }
 
 /**
  * 이동 방향에서 스프라이트 방향을 고른다. 앞 3/4과 뒤 3/4 두 장을 좌우 반전해 네 방향을 만든다(반전 여부는 그림 쪽에서 정한다).
  * 거의 수직·수평으로 움직일 때 방향이 떨리지 않도록 이전 값을 유지하는 구간을 둔다.
  */
-export function facingFromMove(dir: Vec2, previous: Facing, deadZone = 0.18): Facing {
-  const { right, up } = groundToScreen(dir);
+export function facingFromMove(dir: Vec2, previous: Facing, deadZone = 0.18, azimuth = VIEW.azimuth): Facing {
+  const { right, up } = groundToScreen(dir, azimuth);
   if (Math.hypot(right, up) < 1e-6) return previous;
   return {
     back: Math.abs(up) < deadZone ? previous.back : up > 0,
     left: Math.abs(right) < deadZone ? previous.left : right < 0,
   };
+}
+
+/**
+ * 앞, 뒤, 옆 그림을 따로 두는 4방향 방식의 방향 고르기. 화면에서 더 많이 움직이는 축을 따른다.
+ * 대각선으로 걸을 때 두 축이 비슷해 방향이 떨리지 않도록, 지금 보는 축이 keep배만큼 유리하다.
+ */
+export function cardinalFacingFromMove(
+  dir: Vec2,
+  previous: Facing,
+  azimuth = VIEW.azimuth,
+  keep = 1.2,
+): Facing {
+  const { right, up } = groundToScreen(dir, azimuth);
+  const across = Math.abs(right);
+  const along = Math.abs(up);
+  if (Math.hypot(across, along) < 1e-6) return previous;
+  const side = previous.side ? across * keep >= along : across > along * keep;
+  if (side) return { back: previous.back, left: right < 0, side: true };
+  return { back: up > 0, left: previous.left, side: false };
 }

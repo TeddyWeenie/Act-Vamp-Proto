@@ -2,13 +2,13 @@ import { Group, Mesh, PlaneGeometry, type MeshBasicMaterial, type Texture } from
 import { CELL, FIGURE_HEIGHT, FOOT_MARGIN, type SpriteSheet } from '../data/sprites';
 import type { SpriteAnimator } from '../game/capabilities';
 import { frameAt, isFinished } from '../game/logic/animation';
-import { VIEW } from '../game/logic/view';
+import type { ViewAngle } from '../game/logic/view';
 import { ORDER, type SpriteLook } from './look';
 
 /**
  * 3D 장면 안에 세운 2D 동작 그림.
  * 평면을 지면에 수직으로 세우고 카메라 쪽으로만 돌려 둔다. 수직으로 서 있어야 벽 앞뒤에서 깊이가 맞는다.
- * 45도에서 내려다보면 세로가 눌려 보이므로, 가로를 같은 비율로 줄여 원래 그림 비율을 유지한다.
+ * 위에서 내려다보면 세로가 눌려 보이므로, 가로를 같은 비율로 줄여 원래 그림 비율을 유지한다.
  */
 export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
   readonly root = new Group();
@@ -25,16 +25,17 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     private readonly textures: Readonly<Record<Name, Texture>>,
     first: Name,
     look: SpriteLook,
+    angle: ViewAngle,
   ) {
     this.current = first;
     this.cellHeight = (sheet.height * CELL) / FIGURE_HEIGHT;
-    this.cellWidth = this.cellHeight * Math.cos(VIEW.elevation);
+    this.cellWidth = this.cellHeight * Math.cos(angle.elevation);
 
     // 발 기준선이 원점에 오도록 평면을 올려 둔다. 크기를 바꿔도 발 위치는 그대로다.
     const geometry = new PlaneGeometry(1, 1);
     geometry.translate(0, 0.5 - FOOT_MARGIN / CELL, 0);
     this.mesh = new Mesh(geometry, look.spriteMaterial(textures[first]));
-    this.mesh.rotation.y = VIEW.azimuth;
+    this.mesh.rotation.y = angle.azimuth;
     this.mesh.renderOrder = ORDER.sprite;
     this.root.add(this.mesh);
 
@@ -84,13 +85,12 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     this.shownFrame = frame;
     const texture = this.textures[this.current];
     // 그림이 원래 보는 쪽과 지금 봐야 하는 쪽이 다를 때만 뒤집는다. 반전은 텍스처 좌표를 거꾸로 읽어서 처리한다.
-    const mirrored = this.left !== (clip.faces === 'left');
+    const mirrored = clip.faces !== 'center' && this.left !== (clip.faces === 'left');
     texture.repeat.set((mirrored ? -1 : 1) / clip.frames, 1);
     texture.offset.set((frame + (mirrored ? 1 : 0)) / clip.frames, 0);
-    this.mesh.scale.set(
-      this.cellWidth * clip.scale * (clip.cellAspect ?? 1),
-      this.cellHeight * clip.scale,
-      1,
-    );
+    const height = this.cellHeight * clip.scale;
+    this.mesh.scale.set(this.cellWidth * clip.scale * (clip.cellAspect ?? 1), height, 1);
+    // 평면은 기본 발 여백에 맞춰 올려 두었으므로, 여백이 다른 그림은 그 차이만큼 내려 발을 같은 자리에 둔다.
+    this.mesh.position.y = ((FOOT_MARGIN - (clip.footMargin ?? FOOT_MARGIN)) / CELL) * height;
   }
 }

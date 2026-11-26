@@ -63,15 +63,20 @@ def lowest_foot_x(sub, x0):
     return x0 + (run[0] + run[-1]) / 2
 
 def main():
-    """slice.py <sheet.png> <out prefix> <cols> <rows> <feet|head|planted|box> <gif ms> [cell width]
+    """slice.py <sheet.png> <out prefix> <cols> <rows> <feet|head|planted|box> <gif ms> [cell width] [foot margin]
 
     feet     centre both feet in the cell (standing, walking, side lunges)
     planted  pin the lowest foot instead, for moves where one foot stays put while the body travels
              (lunges seen from behind). Needs a wider cell: pass e.g. 768.
     head     centre the head. box: centre the bounding box.
+
+    foot margin  cell pixels kept below the feet (default 24). Pass a larger value when something thin
+                 hangs below the feet, such as a sword thrust toward the camera: the feet are then found
+                 as the lowest wide part of the figure, and the game must be told the same margin.
     """
     src, out_prefix, cols, rows, anchor, ms = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5], int(sys.argv[6])
     CELL_W = int(sys.argv[7]) if len(sys.argv) > 7 else 512
+    MARGIN = int(sys.argv[8]) if len(sys.argv) > 8 else 24
     im = Image.open(src).convert('RGBA'); W, H = im.size
     a = np.array(im)[..., 3] > 40
     info = {'src_size': [W, H], 'method': []}
@@ -112,12 +117,20 @@ def main():
     info['boxes'] = [[int(v) for v in b[:4]] for b in boxes]
     CELL = 512
     mh = max(b[3] - b[1] for b in boxes); 
+    # Row just below the feet, counted from the top of each box. Normally the bottom of the figure;
+    # with a foot margin it is the lowest row wide enough to be a boot rather than a blade.
+    def foot_row(i):
+        sub = part_of(i)
+        if MARGIN == 24: return sub.shape[0]
+        wide = np.where(sub.sum(axis=1) >= 28)[0]
+        return int(wide[-1]) + 1
+    feet = [foot_row(i) for i in range(len(boxes))]
     # horizontal extent around anchor
     anchors = []
     for i, b in enumerate(boxes):
-        sub = part_of(i); h = sub.shape[0]
+        sub = part_of(i); h = feet[i]
         if anchor == 'feet':
-            part = sub[int(h * 0.88):]
+            part = sub[int(h * 0.88):h]
         elif anchor == 'head':
             part = sub[:int(h * 0.35)]
         else:
@@ -135,7 +148,9 @@ def main():
         shift = b[0] + (xs[0] + xs[-1]) / 2 - anchors[0]
         anchors = [ax + shift for ax in anchors]
     ext = max(max(ax - b[0], b[2] - ax) for b, ax in zip(boxes, anchors))
-    scale = min((CELL - 48) / mh, (CELL_W / 2 - 6) / ext, 1.0)
+    above = max(feet); below = max(b[3] - b[1] - f for b, f in zip(boxes, feet))
+    scale = min((CELL - 24 - MARGIN) / above, (CELL_W / 2 - 6) / ext, 1.0)
+    if below > 0: scale = min(scale, (MARGIN - 4) / below)
     info['scale'] = scale; info['max_h'] = int(mh); info['cell'] = [CELL_W, CELL]
     frames = []
     for i, (b, ax) in enumerate(zip(boxes, anchors)):
@@ -145,7 +160,7 @@ def main():
         nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
         crop = crop.resize((nw, nh), Image.LANCZOS)
         cell = Image.new('RGBA', (CELL_W, CELL), (0, 0, 0, 0))
-        px = round(CELL_W / 2 - (ax - b[0]) * scale); py = CELL - 24 - nh
+        px = round(CELL_W / 2 - (ax - b[0]) * scale); py = CELL - MARGIN - round(feet[i] * scale)
         cell.alpha_composite(crop, (max(0, min(CELL_W - nw, px)), py)); frames.append(cell)
     atlas = Image.new('RGBA', (CELL_W * len(frames), CELL), (0, 0, 0, 0))
     for i, f in enumerate(frames): atlas.alpha_composite(f, (i * CELL_W, 0))

@@ -1,6 +1,7 @@
 import type { CollisionSpace, OcclusionTarget, SpriteAnimator } from '../capabilities';
 import type { CharacterController, MoveIntent } from '../control/controller';
-import { facingFromMove, type Facing } from '../logic/movement';
+import type { FacingRule } from '../logic/facing';
+import type { Facing } from '../logic/movement';
 import type { Vec2 } from '../logic/view';
 import {
   CHARACTER_STATES,
@@ -25,7 +26,7 @@ const BLOCKED_RATIO = 0.2;
 
 /**
  * 걸어 다니는 2D 캐릭터의 공통 뼈대.
- * 위치, 방향, 행동 상태를 스스로 관리하고, 무엇에 조종되는지와 어떤 공간을 걷는지는 주입받는다.
+ * 위치, 방향, 행동 상태를 스스로 관리하고, 무엇에 조종되는지, 어떤 공간을 걷는지, 방향을 어떻게 정하는지는 주입받는다.
  * 하위 클래스는 자세를 자기 그림 이름으로 바꾸는 방법만 정한다.
  */
 export abstract class Character<Clip extends string>
@@ -36,7 +37,7 @@ export abstract class Character<Clip extends string>
 
   private state: CharacterState = CHARACTER_STATES.idle;
   private current: Vec2;
-  private direction: Facing = { back: false, left: true };
+  private direction: Facing;
 
   protected constructor(
     private readonly sprite: SpriteAnimator<Clip>,
@@ -44,9 +45,11 @@ export abstract class Character<Clip extends string>
     private readonly space: CollisionSpace,
     readonly controller: CharacterController,
     start: Readonly<Vec2>,
+    private readonly facingRule: FacingRule,
   ) {
     super(sprite.root);
     this.current = { x: start.x, z: start.z };
+    this.direction = facingRule.initial;
     this.occlusionHeights = [0.25, body.height * 0.55, body.height * 0.95];
     this.sprite.setPosition(start.x, start.z);
   }
@@ -83,7 +86,7 @@ export abstract class Character<Clip extends string>
     if (distance <= 0) return true;
     const next = this.space.move(this.current, intent.dir, distance, this.body.radius);
     const moved = Math.hypot(next.x - this.current.x, next.z - this.current.z);
-    this.direction = facingFromMove(intent.dir, this.direction);
+    this.direction = this.facingRule.next(intent.dir, this.direction);
     this.current = next;
     return moved > distance * BLOCKED_RATIO;
   }

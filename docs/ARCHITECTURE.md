@@ -16,10 +16,11 @@ src/
     World.ts               장면에 있는 모든 것을 맡는다
     capabilities.ts        객체끼리 주고받는 약속(작은 인터페이스들)
     input.ts               키보드와 포인터 입력
-    entities/              장면에 놓이는 것: Entity, Character, Hero, Building, Ground, MoveMarker
+    entities/              장면에 놓이는 것: Entity, Character, Hero, CardinalHero, Building, Ground, MoveMarker
     states/                캐릭터의 행동 상태: 대기, 걷기, 공격
     control/               캐릭터를 조종하는 방법: 키보드, 클릭, 플레이어
     systems/               여러 객체에 걸친 규칙: 충돌 지도, 가림 검사
+    staging/               카메라 구도와 그에 딸린 그림·배치의 묶음: Staging, QuarterStaging, TopStaging
     logic/                 계산만 하는 순수 함수(방향, 충돌, 가림, 프레임)
   render/                  화면 표현: 카메라, 스프라이트, 모델 보관소
     look.ts                화면 느낌의 약속(SceneLook)과 공통 뼈대(BaseLook)
@@ -64,6 +65,8 @@ BaseLook (추상)
 - **행동 상태**: `Character`는 지금 상태의 `update`를 부를 뿐이고, 대기·걷기·공격이 각자 다르게 움직이며 다음 상태를 돌려줍니다. 피격, 시전, 쓰러짐은 상태 클래스를 더하면 됩니다.
 - **조종**: `MoveSource`를 구현한 `KeyboardMove`와 `PointerMove`를 `PlayerController`가 우선순위대로 묶습니다. 길 찾기나 AI도 같은 인터페이스로 들어옵니다.
 - **화면 느낌**: `SceneLook`을 구현한 `CartoonSceneLook`(기본)과 `FlatLook`을 갈아 끼웁니다. 건물은 `look.dress(model)`로 겉모습을 입고 불투명도만 알려 주며, `Game`은 `look.render(...)`에 그리기를 맡깁니다. 주소에 `?look=flat`을 붙이면 꾸밈 없는 화면으로 바뀝니다.
+- **카메라 구도**: `Staging`을 구현한 `QuarterStaging`(기본, 45도 돌린 쿼터뷰)과 `TopStaging`(시안, 비스듬한 탑뷰)을 갈아 끼웁니다. 구도마다 카메라 각도, 그 각도에 맞게 그린 주인공, 보기 좋은 마을 배치가 함께 바뀌므로 한 묶음으로 둡니다. 주소에 `?view=top`을 붙이면 탑뷰 시안으로 바뀝니다.
+- **방향 정하기**: `FacingRule`을 구현한 `DiagonalFacing`(앞 3/4·뒤 3/4 두 그림)과 `CardinalFacing`(앞·뒤·옆 세 그림)을 캐릭터가 넘겨받아 씁니다. 그림 이름을 고르는 일은 `Hero`와 `CardinalHero`가 각자 `clipFor`로 맡습니다.
 - **월드**: 모든 `Entity`를 한 줄로 세워 같은 `update`를 부릅니다.
 
 ### 캡슐화

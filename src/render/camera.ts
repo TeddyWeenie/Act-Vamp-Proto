@@ -1,13 +1,13 @@
 import { OrthographicCamera, Plane, Raycaster, Vector2, Vector3, type Camera } from 'three';
 import type { GroundPicker } from '../game/capabilities';
-import { towardCamera, type Vec2 } from '../game/logic/view';
+import { VIEW, towardCamera, type Vec2, type ViewAngle } from '../game/logic/view';
 
 const DISTANCE = 60;
 const FOLLOW_RATE = 6;
 const MIN_VIEW_HEIGHT = 6;
 const MAX_VIEW_HEIGHT = 14;
 
-/** 위에서 45도로 내려다보는 고정 쿼터뷰 카메라. 각도는 바뀌지 않고 대상만 따라간다. */
+/** 정해진 각도로 내려다보는 고정 시점 카메라. 각도는 처음에 받은 그대로이고 대상만 따라간다. */
 export class QuarterCamera implements GroundPicker {
   private readonly lens = new OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
   private readonly target = new Vector3();
@@ -21,8 +21,8 @@ export class QuarterCamera implements GroundPicker {
   private viewHeight = 8.6;
   private aspect = 16 / 9;
 
-  constructor() {
-    const dir = towardCamera();
+  constructor(angle: ViewAngle = VIEW) {
+    const dir = towardCamera(angle.elevation, angle.azimuth);
     this.offset = new Vector3(dir.x, dir.y, dir.z).multiplyScalar(DISTANCE);
     this.apply();
   }

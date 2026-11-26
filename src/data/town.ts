@@ -4,7 +4,7 @@ export interface BuildingPlacement {
   model: string;
   x: number;
   z: number;
-  /** 90도 단위 회전. 0이면 정면이 +Z(화면 왼쪽 아래), 1이면 +X(화면 오른쪽 아래)를 본다. */
+  /** 90도 단위 회전. 0이면 정면이 +Z, 1이면 +X를 본다. 쿼터뷰에서는 각각 화면 왼쪽 아래와 오른쪽 아래, 탑뷰에서는 화면 아래와 오른쪽이다. */
   quarterTurns: 0 | 1 | 2 | 3;
   /** 지붕 꼭대기까지의 월드 높이. */
   height: number;
@@ -22,6 +22,21 @@ export const TOWN: readonly BuildingPlacement[] = [
   { model: A, x: 5.6, z: -2.4, quarterTurns: 1, height: 4.3 },
   { model: B, x: 5.4, z: 5.0, quarterTurns: 0, height: 4.1 },
   { model: A, x: -0.4, z: 7.4, quarterTurns: 1, height: 4.3 },
+];
+
+/**
+ * 비스듬한 탑뷰 시안용 배치. 북쪽 줄은 정면이 화면을 보고, 동서의 집은 광장을 보고,
+ * 남쪽 줄은 뒷모습과 지붕이 보인다. 남쪽 줄 바로 위를 지나가면 건물이 캐릭터를 가린다.
+ */
+export const TOWN_TOP: readonly BuildingPlacement[] = [
+  { model: A, x: -6.4, z: -5.2, quarterTurns: 0, height: 4.3 },
+  { model: B, x: -2.2, z: -5.6, quarterTurns: 0, height: 4.1 },
+  { model: A, x: 2.0, z: -5.2, quarterTurns: 0, height: 4.5 },
+  { model: B, x: 6.2, z: -5.6, quarterTurns: 0, height: 4.1 },
+  { model: B, x: -8.4, z: 0.2, quarterTurns: 1, height: 4.1 },
+  { model: A, x: 8.4, z: 0.6, quarterTurns: 3, height: 4.3 },
+  { model: A, x: -3.6, z: 5.6, quarterTurns: 2, height: 4.3 },
+  { model: B, x: 3.4, z: 5.2, quarterTurns: 0, height: 4.1 },
 ];
 
 export const TOWN_BOUNDS: Bounds = { minX: -12, maxX: 12, minZ: -12, maxZ: 12 };

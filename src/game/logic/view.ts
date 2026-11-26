@@ -1,5 +1,5 @@
 /**
- * 고정 쿼터뷰 카메라의 방향 계산. 렌더러에 의존하지 않는 순수 함수만 둔다.
+ * 고정 시점 카메라의 방향 계산. 렌더러에 의존하지 않는 순수 함수만 둔다.
  * 좌표계: 지면은 XZ 평면, Y가 위.
  */
 export interface Vec2 {
@@ -13,11 +13,27 @@ export interface Vec3 {
   z: number;
 }
 
+/** 카메라가 장면을 바라보는 고정 각도. */
+export interface ViewAngle {
+  /** 지면에서 올려다본 카메라의 높이각(라디안). 클수록 위에서 내려다본다. */
+  readonly elevation: number;
+  /** 수직축을 중심으로 돌린 각(라디안). 0이면 화면 가로세로가 지면의 X·Z축과 나란하다. */
+  readonly azimuth: number;
+}
+
 /** 위에서 45도로 내려다보고, 지면 격자가 마름모로 보이도록 45도 돌린 시점. */
-export const VIEW = {
+export const QUARTER_VIEW: ViewAngle = {
   elevation: Math.PI / 4,
   azimuth: Math.PI / 4,
-} as const;
+};
+
+/** 따로 정하지 않았을 때 쓰는 시점. */
+export const VIEW = QUARTER_VIEW;
+
+/** 비스듬한 탑뷰: 돌리지 않고 위에서 비스듬히 내려다본다. 화면의 위아래좌우가 지면의 축과 맞는다. */
+export function topView(elevationDegrees = 50): ViewAngle {
+  return { elevation: (elevationDegrees * Math.PI) / 180, azimuth: 0 };
+}
 
 /** 장면에서 카메라를 향하는 단위 벡터. */
 export function towardCamera(elevation = VIEW.elevation, azimuth = VIEW.azimuth): Vec3 {

@@ -1,5 +1,6 @@
 import { LinearFilter, LinearMipmapLinearFilter, SRGBColorSpace, TextureLoader, type Texture } from 'three';
 import type { SpriteSheet } from '../data/sprites';
+import type { ViewAngle } from '../game/logic/view';
 import { SpriteView } from './SpriteView';
 import type { SpriteLook } from './look';
 
@@ -7,7 +8,10 @@ import type { SpriteLook } from './look';
 export class SpriteFactory {
   private readonly loader = new TextureLoader();
 
-  constructor(private readonly look: SpriteLook) {}
+  constructor(
+    private readonly look: SpriteLook,
+    private readonly angle: ViewAngle,
+  ) {}
 
   async create<Name extends string>(sheet: SpriteSheet<Name>, first: Name): Promise<SpriteView<Name>> {
     const names = Object.keys(sheet.clips) as Name[];
@@ -21,6 +25,6 @@ export class SpriteFactory {
       texture.anisotropy = 4;
       textures[name] = texture;
     });
-    return new SpriteView(sheet, textures, first, this.look);
+    return new SpriteView(sheet, textures, first, this.look, this.angle);
   }
 }
