@@ -10,7 +10,7 @@ const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const loading = document.querySelector<HTMLElement>('#loading')!;
 
 const params = new URLSearchParams(location.search);
-// 기본은 45도 쿼터뷰. 주소에 ?view=top을 붙이면 비스듬한 탑뷰 시안으로 바뀐다(&pitch=55처럼 내려다보는 각도를 바꿔 볼 수 있다).
+// 기본은 비스듬한 탑뷰 50도. &pitch=45처럼 내려다보는 각도를 바꿔 볼 수 있고, ?view=quarter를 붙이면 예전 45도 쿼터뷰로 비교해 볼 수 있다.
 const staging = createStaging(params);
 // 기본은 카툰 화면. 주소에 ?look=flat을 붙이면 꾸밈 없는 화면으로 비교해 볼 수 있다.
 const look = params.get('look') === 'flat' ? new FlatLook() : new CartoonSceneLook(staging.heroHeight);
@@ -30,7 +30,7 @@ new GameFactory(canvas, look, staging)
   });
 
 function createStaging(query: URLSearchParams): Staging {
-  if (query.get('view') !== 'top') return new QuarterStaging();
+  if (query.get('view') === 'quarter') return new QuarterStaging();
   const pitch = Number(query.get('pitch'));
   return new TopStaging(pitch >= 30 && pitch <= 80 ? pitch : undefined);
 }

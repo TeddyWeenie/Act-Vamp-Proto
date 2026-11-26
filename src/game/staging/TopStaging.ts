@@ -10,7 +10,7 @@ import { topView, type ViewAngle } from '../logic/view';
 import type { SpriteSource, Staging } from './Staging';
 
 /**
- * 비스듬한 탑뷰(시안). 카메라를 돌리지 않고 위에서 비스듬히 내려다본다.
+ * 비스듬한 탑뷰(기본 구도). 카메라를 돌리지 않고 위에서 비스듬히 내려다본다.
  * 주인공은 앞, 뒤, 왼쪽, 오른쪽 그림을 따로 쓴다.
  */
 export class TopStaging implements Staging {

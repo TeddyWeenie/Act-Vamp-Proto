@@ -25,7 +25,7 @@ export const TOWN: readonly BuildingPlacement[] = [
 ];
 
 /**
- * 비스듬한 탑뷰 시안용 배치. 북쪽 줄은 정면이 화면을 보고, 동서의 집은 광장을 보고,
+ * 비스듬한 탑뷰용 배치. 북쪽 줄은 정면이 화면을 보고, 동서의 집은 광장을 보고,
  * 남쪽 줄은 뒷모습과 지붕이 보인다. 남쪽 줄 바로 위를 지나가면 건물이 캐릭터를 가린다.
  */
 export const TOWN_TOP: readonly BuildingPlacement[] = [
