@@ -30,10 +30,19 @@ const lucien = (file: string) => `/assets/sprites/lucien/${file}.png`;
 export const LUCIEN: SpriteSheet<HeroClip> = {
   height: 2.0,
   clips: {
-    // 앞모습 대기와 걷기는 왼쪽 아래를, 공격과 뒷모습은 오른쪽을 보고 그려져 있다.
+    // 앞모습은 모두 왼쪽 아래를, 뒷모습은 모두 오른쪽 위를 보고 그려져 있다.
+    // 공격 그림은 얼굴, 몸, 칼이 같은 쪽을 향해야 한다(얼굴이 화면 정면을 보면 딴 곳을 보는 것처럼 보인다).
     idle: { url: lucien('idle'), faces: 'left', frames: 4, fps: 4.5, loop: true, scale: 1 },
     walk: { url: lucien('walk'), faces: 'left', frames: 6, fps: 9, loop: true, scale: 1 },
-    attack: { url: lucien('attack'), faces: 'right', frames: 6, fps: 12, loop: false, scale: 0.94 },
+    attack: {
+      url: lucien('attack'),
+      faces: 'left',
+      frames: 6,
+      fps: 12,
+      loop: false,
+      scale: 0.9,
+      cellAspect: 640 / CELL,
+    },
     backIdle: { url: lucien('back-idle'), faces: 'right', frames: 4, fps: 4.5, loop: true, scale: 1.06 },
     backWalk: { url: lucien('back-walk'), faces: 'right', frames: 6, fps: 9, loop: true, scale: 1.06 },
     backAttack: {
