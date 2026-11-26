@@ -10,18 +10,18 @@ export interface BuildingPlacement {
   height: number;
 }
 
-const A = '/assets/models/townhouse-a.glb';
-const B = '/assets/models/townhouse-b.glb';
+/** 깔끔한 표면으로 다시 그린 민가. 집 종류가 늘면 여기에 모델을 더하고 아래 표에서 골라 쓴다. */
+const HOUSE = '/assets/models/townhouse.glb';
 
 /** 회색종 마을 광장의 임시 배치. 맵 설계가 정해지면 이 표만 바꾸면 된다. */
 export const TOWN: readonly BuildingPlacement[] = [
-  { model: A, x: -7.2, z: -2.6, quarterTurns: 1, height: 4.3 },
-  { model: B, x: -2.4, z: -7.4, quarterTurns: 0, height: 4.1 },
-  { model: A, x: 2.8, z: -8.0, quarterTurns: 0, height: 4.5 },
-  { model: B, x: -8.0, z: 3.0, quarterTurns: 1, height: 4.1 },
-  { model: A, x: 5.6, z: -2.4, quarterTurns: 1, height: 4.3 },
-  { model: B, x: 5.4, z: 5.0, quarterTurns: 0, height: 4.1 },
-  { model: A, x: -0.4, z: 7.4, quarterTurns: 1, height: 4.3 },
+  { model: HOUSE, x: -7.2, z: -2.6, quarterTurns: 1, height: 4.3 },
+  { model: HOUSE, x: -2.4, z: -7.4, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: 2.8, z: -8.0, quarterTurns: 0, height: 4.5 },
+  { model: HOUSE, x: -8.0, z: 3.0, quarterTurns: 1, height: 4.1 },
+  { model: HOUSE, x: 5.6, z: -2.4, quarterTurns: 1, height: 4.3 },
+  { model: HOUSE, x: 5.4, z: 5.0, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: -0.4, z: 7.4, quarterTurns: 1, height: 4.3 },
 ];
 
 /**
@@ -29,14 +29,14 @@ export const TOWN: readonly BuildingPlacement[] = [
  * 남쪽 줄은 뒷모습과 지붕이 보인다. 남쪽 줄 바로 위를 지나가면 건물이 캐릭터를 가린다.
  */
 export const TOWN_TOP: readonly BuildingPlacement[] = [
-  { model: A, x: -6.4, z: -5.2, quarterTurns: 0, height: 4.3 },
-  { model: B, x: -2.2, z: -5.6, quarterTurns: 0, height: 4.1 },
-  { model: A, x: 2.0, z: -5.2, quarterTurns: 0, height: 4.5 },
-  { model: B, x: 6.2, z: -5.6, quarterTurns: 0, height: 4.1 },
-  { model: B, x: -8.4, z: 0.2, quarterTurns: 1, height: 4.1 },
-  { model: A, x: 8.4, z: 0.6, quarterTurns: 3, height: 4.3 },
-  { model: A, x: -3.6, z: 5.6, quarterTurns: 2, height: 4.3 },
-  { model: B, x: 3.4, z: 5.2, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: -6.4, z: -5.2, quarterTurns: 0, height: 4.3 },
+  { model: HOUSE, x: -2.2, z: -5.6, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: 2.0, z: -5.2, quarterTurns: 0, height: 4.5 },
+  { model: HOUSE, x: 6.2, z: -5.6, quarterTurns: 0, height: 4.1 },
+  { model: HOUSE, x: -8.4, z: 0.2, quarterTurns: 1, height: 4.1 },
+  { model: HOUSE, x: 8.4, z: 0.6, quarterTurns: 3, height: 4.3 },
+  { model: HOUSE, x: -3.6, z: 5.6, quarterTurns: 2, height: 4.3 },
+  { model: HOUSE, x: 3.4, z: 5.2, quarterTurns: 0, height: 4.1 },
 ];
 
 export const TOWN_BOUNDS: Bounds = { minX: -12, maxX: 12, minZ: -12, maxZ: 12 };

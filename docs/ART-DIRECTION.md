@@ -113,18 +113,28 @@ Higgsfield의 `gpt_image_2_6`(품질 high, 2k, 투명 배경)으로 동작 띠�
 
 ## 3D 배경 만드는 법
 
-`stage-kit.png`를 참고로 건물 한 채를 단색 회색 배경에 그린 뒤 3D로 바꿉니다. 두 가지 방식을 섞어 씁니다.
+`stage-kit.png`를 참고로 건물 한 채를 단색 회색 배경에 그린 뒤 3D로 바꿉니다. 화면에 크게 보이는 건물은 `image_to_3d`로 만듭니다.
 
 | 방식 | 크레딧 | 시간 | 특징 | 쓰는 곳 |
 | --- | --- | --- | --- | --- |
 | `image_to_3d` (텍스처 포함) | 30 | 약 6분 | 2048 텍스처로 선명하고 조명도 정상. 등불 같은 작은 부품이 빠지고 지붕 모양이 조금 달라짐 | 주요 건물 |
 | `sam_3_3d` | 1 | 수십 초 | 형태는 컨셉에 가깝지만 텍스처가 흐림. 안쪽에 껍질이 한 겹 더 있고 법선이 없음(카툰 모듈이 처리) | 소품, 먼 건물 |
 
-- 기본 화면은 조명과 후처리 없이 텍스처 색을 그대로 보여 줍니다(`FlatLook`). 두 방식으로 만든 건물을 섞어 놓아도 만든 그대로 보입니다.
+- 기본 화면은 조명과 후처리 없이 텍스처 색을 그대로 보여 줍니다(`FlatLook`). 그래서 텍스처가 깔끔한지는 원화에서 정해집니다.
 - 주소에 `?look=cartoon`을 붙이면 카툰 렌더링(3단계 명암, 외곽선, 텍스처 색 평탄화, 그림의 빛 방향에 맞춘 조명, 화면 전체 색 보정과 안개)을 입힌 화면으로 비교할 수 있습니다. 수치는 `src/render/cartoon/settings.ts`에 있습니다.
 - `sam_3_3d` 모델이 조명에서 어두웠던 이유는 GLB 재질에 metallicFactor가 없어 금속으로 읽혔기 때문입니다. 기본 화면은 조명을 쓰지 않고, 카툰 화면은 재질을 통째로 바꾸므로 둘 다 영향이 없습니다.
 - 화면 느낌은 `src/render/look.ts`의 `SceneLook` 인터페이스 뒤에 있어서, 건물이나 캐릭터 코드를 고치지 않고 갈아 끼웁니다.
-- 지금 들어 있는 건물: `public/assets/models/townhouse-a.glb`(image_to_3d), `townhouse-b.glb`(sam_3_3d).
+- 지금 들어 있는 건물: `public/assets/models/townhouse.glb`(깔끔한 원화 `docs/art-direction/house-clean-concept.png`를 `image_to_3d`로 변환).
+
+### 건물 표면은 깔끔하게 (2026-11-26 확정)
+
+건물 원화는 표면을 깔끔하게 그립니다. 처음 원화에는 얼룩진 회벽, 이끼, 거친 나뭇결이 그려져 있어서 3D로 바꾼 뒤에도 화면이 지저분해 보였습니다.
+
+- 원화 지시문에 넣는 문구: "clean, tidy stylised game asset. Smooth plaster walls in one even cream colour with no mottling, no cracks and no stains. Wooden beams in one even warm brown with only a few simple grain lines. Roof tiles in neat even rows with uniform colour. Stone as tidy simple blocks in one even grey. No moss, no dirt, no weathering, no noise, no speckles. Crisp clean edges, large calm colour areas with soft simple shading, no dark outlines. Evenly lit, no cast shadow on the ground, no text."
+- 새 건물은 `house-clean-concept.png`를 참고 그림으로 함께 주어 표면 느낌을 맞춥니다.
+- 만든 뒤 텍스처를 프로그램으로 펴는 방법(가장자리를 지키는 흐림)은 효과가 작았고, `sam_3_3d` 건물은 오히려 더 흐려졌습니다. 채택하지 않았습니다.
+- `sam_3_3d`는 깔끔한 원화를 주어도 창과 문이 뭉개져서, 가까이 보이는 건물에는 쓰지 않습니다. 정면 방향도 매번 달라서 돌려 맞춰야 합니다.
+- 처음 만든 두 건물(얼룩이 있는 `image_to_3d` 집과 흐린 `sam_3_3d` 집)은 저장소 기록(커밋 `4439b83`까지의 `townhouse-a.glb`, `townhouse-b.glb`)에 남아 있습니다.
 
 ## 건물에 카툰을 입혀 본 시도 (2026-11-26, 모두 채택하지 않음)
 
