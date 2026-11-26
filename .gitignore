@@ -1,3 +1,5 @@
-.sites-runtime/
 node_modules/
+dist/
+.sites-runtime/
 *.zip
+.DS_Store

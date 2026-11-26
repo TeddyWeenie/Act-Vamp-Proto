@@ -1,0 +1,100 @@
+:root {
+  color-scheme: dark;
+  --ink: #17131c;
+  --paper: #efe6d6;
+  --gold: #c9a66b;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Apple SD Gothic Neo', 'Malgun Gothic', serif;
+}
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+#vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(18, 12, 26, 0.55) 100%);
+}
+#title {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+#title small {
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+#title h1 {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+#hint {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 18px;
+  padding: 8px 16px;
+  border: 1px solid rgba(201, 166, 107, 0.35);
+  border-radius: 999px;
+  background: rgba(23, 19, 28, 0.72);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+kbd {
+  display: inline-block;
+  min-width: 20px;
+  margin-right: 3px;
+  padding: 1px 5px;
+  border: 1px solid rgba(239, 230, 214, 0.4);
+  border-radius: 4px;
+  font:
+    600 11px/1.5 ui-monospace,
+    monospace;
+  text-align: center;
+}
+#loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  transition: opacity 0.4s;
+}
+#loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  #hint {
+    font-size: 11px;
+    gap: 10px;
+  }
+  #hint span:last-child {
+    display: none;
+  }
+}

@@ -1,0 +1,97 @@
+import { Group, Mesh, PlaneGeometry, type MeshBasicMaterial, type Texture } from 'three';
+import { CELL, FIGURE_HEIGHT, FOOT_MARGIN, type SpriteSheet } from '../data/sprites';
+import type { SpriteAnimator } from '../game/capabilities';
+import { frameAt, isFinished } from '../game/logic/animation';
+import { VIEW } from '../game/logic/view';
+import { ORDER, type SpriteLook } from './look';
+
+/**
+ * 3D 장면 안에 세운 2D 동작 그림.
+ * 평면을 지면에 수직으로 세우고 카메라 쪽으로만 돌려 둔다. 수직으로 서 있어야 벽 앞뒤에서 깊이가 맞는다.
+ * 45도에서 내려다보면 세로가 눌려 보이므로, 가로를 같은 비율로 줄여 원래 그림 비율을 유지한다.
+ */
+export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
+  readonly root = new Group();
+  private readonly mesh: Mesh<PlaneGeometry, MeshBasicMaterial>;
+  private readonly cellHeight: number;
+  private readonly cellWidth: number;
+  private current: Name;
+  private time = 0;
+  private flip = false;
+  private shownFrame = -1;
+
+  constructor(
+    private readonly sheet: SpriteSheet<Name>,
+    private readonly textures: Readonly<Record<Name, Texture>>,
+    first: Name,
+    look: SpriteLook,
+  ) {
+    this.current = first;
+    this.cellHeight = (sheet.height * CELL) / FIGURE_HEIGHT;
+    this.cellWidth = this.cellHeight * Math.cos(VIEW.elevation);
+
+    // 발 기준선이 원점에 오도록 평면을 올려 둔다. 크기를 바꿔도 발 위치는 그대로다.
+    const geometry = new PlaneGeometry(1, 1);
+    geometry.translate(0, 0.5 - FOOT_MARGIN / CELL, 0);
+    this.mesh = new Mesh(geometry, look.spriteMaterial(textures[first]));
+    this.mesh.rotation.y = VIEW.azimuth;
+    this.mesh.renderOrder = ORDER.sprite;
+    this.root.add(this.mesh);
+
+    const shadowGeometry = new PlaneGeometry(1, 1);
+    shadowGeometry.rotateX(-Math.PI / 2);
+    const shadow = new Mesh(shadowGeometry, look.blobShadowMaterial());
+    shadow.scale.set(sheet.height * 0.62, 1, sheet.height * 0.62);
+    shadow.position.y = 0.02;
+    shadow.renderOrder = ORDER.shadow;
+    this.root.add(shadow);
+
+    this.apply();
+  }
+
+  get clip(): Name {
+    return this.current;
+  }
+
+  get finished(): boolean {
+    return isFinished(this.sheet.clips[this.current], this.time);
+  }
+
+  play(name: Name, restart = false): void {
+    if (name === this.current && !restart) return;
+    this.current = name;
+    this.time = 0;
+    this.mesh.material.map = this.textures[name];
+    this.shownFrame = -1;
+    this.apply();
+  }
+
+  setFlip(flip: boolean): void {
+    if (flip === this.flip) return;
+    this.flip = flip;
+    this.shownFrame = -1;
+    this.apply();
+  }
+
+  setPosition(x: number, z: number): void {
+    this.root.position.set(x, 0, z);
+  }
+
+  update(dt: number): void {
+    this.time += dt;
+    this.apply();
+  }
+
+  private apply(): void {
+    const clip = this.sheet.clips[this.current];
+    const frame = frameAt(clip, this.time);
+    // 프레임이 바뀔 때만 텍스처 좌표를 다시 쓴다.
+    if (frame === this.shownFrame) return;
+    this.shownFrame = frame;
+    const texture = this.textures[this.current];
+    // 좌우 반전은 텍스처 좌표를 거꾸로 읽어서 처리한다.
+    texture.repeat.set((this.flip ? -1 : 1) / clip.frames, 1);
+    texture.offset.set((frame + (this.flip ? 1 : 0)) / clip.frames, 0);
+    this.mesh.scale.set(this.cellWidth * clip.scale, this.cellHeight * clip.scale, 1);
+  }
+}
