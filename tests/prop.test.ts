@@ -19,7 +19,12 @@ class FakeImage implements StillImage {
 
 const angle = topView(50);
 const camera = towardCamera(angle.elevation, angle.azimuth);
-const walker = (x: number, z: number) => ({ position: { x, z }, occlusionHeights: [0.25, 1.1, 1.9] });
+const walker = (x: number, z: number) => ({
+  position: { x, z },
+  occlusionHeights: [0.25, 1.1, 1.9],
+  elevation: 0,
+  halfWidth: 0.4,
+});
 
 const tree: PropPlacement = {
   image: 'tree.png',

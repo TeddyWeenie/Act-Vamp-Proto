@@ -20,8 +20,12 @@ export interface Obstacle {
 /** 건물 뒤에 숨었는지 살펴볼 대상. */
 export interface OcclusionTarget {
   readonly position: Readonly<Vec2>;
-  /** 가림 검사에 쓰는 높이들(발목, 허리, 머리). */
+  /** 가림 검사에 쓰는 높이들(발목, 허리, 머리). 발밑에서 잰 값이다. */
   readonly occlusionHeights: readonly number[];
+  /** 발이 놓인 높이. 계단 위에 서 있으면 0보다 크다. */
+  readonly elevation: number;
+  /** 화면에서 보이는 몸의 절반 폭. 몸 한쪽만 가려져도 알아채는 데 쓴다. */
+  readonly halfWidth: number;
 }
 
 /** 캐릭터를 가릴 수 있고, 가리면 스스로 옅어지는 것. */
@@ -37,6 +41,21 @@ export interface CollisionSpace {
   /** 맵 안쪽으로 당긴 위치. */
   clamp(point: Readonly<Vec2>): Vec2;
 }
+
+/** 딛고 올라설 수 있는 것(계단, 단). 캐릭터가 그 안에 파묻히지 않고 위에 서게 한다. */
+export interface Raised {
+  /** 그 자리에서 발이 닿는 윗면의 높이. 디딜 것이 없으면 0. */
+  floorAt(point: Readonly<Vec2>): number;
+}
+
+/** 발 디딜 바닥의 높이를 아는 것. */
+export interface Terrain {
+  /** 반지름 radius인 발밑 원이 그 자리에 섰을 때 디디는 바닥의 높이. */
+  heightAt(point: Readonly<Vec2>, radius: number): number;
+}
+
+/** 캐릭터가 걷는 공간: 어디서 막히는지와 바닥이 얼마나 높은지를 함께 안다. */
+export interface WalkableSpace extends CollisionSpace, Terrain {}
 
 /** 화면 좌표(-1~1)가 가리키는 지면 위치를 알려 주는 것. */
 export interface GroundPicker {
@@ -57,7 +76,8 @@ export interface SpriteAnimator<Clip extends string> extends Updatable {
   play(clip: Clip, restart?: boolean): void;
   /** 화면 왼쪽을 보게 할지 오른쪽을 보게 할지. 그림을 뒤집을지는 구현이 그림의 원래 방향을 보고 정한다. */
   faceLeft(left: boolean): void;
-  setPosition(x: number, z: number): void;
+  /** height는 발이 놓이는 높이다. 계단 위에 서면 0보다 크다. */
+  setPosition(x: number, z: number, height: number): void;
 }
 
 /** 장면에 세운 움직이지 않는 그림. 소품은 이것이 어떻게 그려지는지 알 필요가 없다. */
@@ -76,6 +96,10 @@ export interface Stage {
 
 export function isObstacle(value: object): value is Obstacle {
   return 'footprint' in value;
+}
+
+export function isRaised(value: object): value is Raised {
+  return 'floorAt' in value;
 }
 
 export function isOccluder(value: object): value is Occluder {

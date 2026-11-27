@@ -1,6 +1,6 @@
 import type { SpriteSheet } from '../../data/sprites';
 import type { BuildingPlacement, PropPlacement } from '../../data/town';
-import type { CollisionSpace, SpriteAnimator } from '../capabilities';
+import type { WalkableSpace, SpriteAnimator } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import type { Character } from '../entities/Character';
 import type { Bounds } from '../logic/movement';
@@ -27,7 +27,7 @@ export interface Staging {
   readonly heroHeight: number;
   createHero(
     sprites: SpriteSource,
-    space: CollisionSpace,
+    space: WalkableSpace,
     controller: CharacterController,
   ): Promise<Character<string>>;
 }

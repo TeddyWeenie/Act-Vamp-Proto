@@ -1,7 +1,7 @@
 import { LUCIEN_TOP_BODY } from '../../data/characters';
 import { LUCIEN_CARDINAL } from '../../data/sprites';
 import { PLAYER_START, TOWN_TOP, TOWN_TOP_BOUNDS, type PropPlacement } from '../../data/town';
-import type { CollisionSpace } from '../capabilities';
+import type { WalkableSpace } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import { CardinalHero } from '../entities/CardinalHero';
 import type { Character } from '../entities/Character';
@@ -34,7 +34,7 @@ export class TopStaging implements Staging {
 
   async createHero(
     sprites: SpriteSource,
-    space: CollisionSpace,
+    space: WalkableSpace,
     controller: CharacterController,
   ): Promise<Character<string>> {
     const sprite = await sprites.create(LUCIEN_CARDINAL, 'frontIdle');

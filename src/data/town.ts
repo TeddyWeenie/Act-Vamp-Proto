@@ -109,12 +109,13 @@ const BARREL: PropKind = {
 
 /**
  * 비스듬한 탑뷰 광장의 소품. 길 앞쪽에 나무와 울타리를 두어 지나가는 캐릭터를 살짝 가리고,
+ * 문 앞은 막지 않도록 비워 둔다.
  * 나무 그늘 아래에서는 캐릭터도 함께 어두워진다. 빛 효과를 끄면(?air=off) 놓지 않는다.
  */
 export const TOWN_TOP_PROPS: readonly PropPlacement[] = [
   { ...TREE, x: 1.2, z: -3.9 },
-  { ...FENCE, x: 3.3, z: -3.7 },
-  { ...FENCE, x: 4.6, z: -3.7 },
+  { ...FENCE, x: 7.1, z: -4.9 },
+  { ...FENCE, x: 8.4, z: -4.9 },
   { ...BARREL, x: 6.3, z: -5.8 },
   { ...BARREL, x: -1.5, z: -6.2 },
   { ...TREE, x: -8.6, z: -4.6 },

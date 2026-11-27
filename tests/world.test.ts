@@ -1,6 +1,6 @@
 import { Group, type Object3D } from 'three';
 import { describe, expect, it } from 'vitest';
-import type { Obstacle, Occluder, OcclusionTarget } from '../src/game/capabilities';
+import type { Obstacle, Occluder, OcclusionTarget, Raised } from '../src/game/capabilities';
 import { Entity } from '../src/game/entities/Entity';
 import type { Footprint } from '../src/game/logic/movement';
 import { CollisionMap } from '../src/game/systems/CollisionMap';
@@ -65,7 +65,7 @@ describe('월드', () => {
   it('가릴 수 있는 것은 가림 검사에 저절로 등록된다', () => {
     const { occlusion, world } = setup();
     const wall = world.add(new Wall());
-    const target = { position: { x: -1, z: 0 }, occlusionHeights: [1] };
+    const target = { position: { x: -1, z: 0 }, occlusionHeights: [1], elevation: 0, halfWidth: 0 };
     occlusion.watch(target);
     world.update(0.1);
     expect(wall.occluding).toBe(true);
@@ -76,7 +76,7 @@ describe('가림 검사', () => {
   it('대상이 움직이지 않으면 다시 검사하지 않는다', () => {
     const { occlusion, world } = setup();
     const wall = world.add(new Wall());
-    const target = { position: { x: -1, z: 0 }, occlusionHeights: [1] };
+    const target = { position: { x: -1, z: 0 }, occlusionHeights: [1], elevation: 0, halfWidth: 0 };
     occlusion.watch(target);
     occlusion.update();
     occlusion.update();
@@ -103,5 +103,33 @@ describe('충돌 지도', () => {
     const map = new CollisionMap(BOUNDS);
     expect(map.move({ x: 9, z: 0 }, { x: 1, z: 0 }, 5, 0.4).x).toBeCloseTo(9.6, 6);
     expect(map.clamp({ x: 50, z: -50 })).toEqual({ x: 10, z: -10 });
+  });
+});
+
+/** x가 3에서 5 사이면 높이 0.6인 계단. */
+class Steps extends Entity implements Raised {
+  constructor() {
+    super(new Group());
+  }
+  floorAt(point: { x: number; z: number }): number {
+    return point.x >= 3 && point.x <= 5 ? 0.6 : 0;
+  }
+}
+
+describe('바닥 높이', () => {
+  it('딛고 올라설 것은 저절로 등록되어 그 위에서는 바닥이 높아진다', () => {
+    const { collisions, world } = setup();
+    expect(collisions.heightAt({ x: 4, z: 0 }, 0.4)).toBe(0);
+    world.add(new Steps());
+    expect(collisions.heightAt({ x: 4, z: 0 }, 0.4)).toBe(0.6);
+    expect(collisions.heightAt({ x: 0, z: 0 }, 0.4)).toBe(0);
+  });
+
+  it('그림의 한쪽 끝만 계단에 걸쳐도 올라선다', () => {
+    const { collisions, world } = setup();
+    world.add(new Steps());
+    // 가운데는 계단 밖이지만 좌우로 넓은 그림의 오른쪽 끝이 계단 위에 있다.
+    expect(collisions.heightAt({ x: 2.8, z: 0 }, 0.4)).toBe(0.6);
+    expect(collisions.heightAt({ x: 2.6, z: 0 }, 0.4)).toBe(0);
   });
 });

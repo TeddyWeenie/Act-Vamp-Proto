@@ -41,6 +41,27 @@ export function isOccluded(
   return heights.some((y) => rayHitsBox({ x: feet.x, y, z: feet.z }, towardCamera, box));
 }
 
+/**
+ * 캐릭터가 가려졌는지 살필 점들. 몸 가운데뿐 아니라 화면에서 본 좌우 끝도 함께 살핀다.
+ * 가운데만 보면 처마 밑에 몸이 반쯤 들어가도 가려진 줄 모른다.
+ * 화면의 좌우는 카메라를 향한 방향과 직각인 지면 위의 방향이다.
+ */
+export function bodyProbes(
+  feet: { x: number; z: number },
+  heights: readonly number[],
+  elevation: number,
+  halfWidth: number,
+  towardCamera: Vec3,
+): Vec3[] {
+  const flat = Math.hypot(towardCamera.x, towardCamera.z) || 1;
+  const rightX = (towardCamera.z / flat) * halfWidth;
+  const rightZ = (-towardCamera.x / flat) * halfWidth;
+  const sides = halfWidth > 0 ? [0, -1, 1] : [0];
+  return sides.flatMap((side) =>
+    heights.map((y) => ({ x: feet.x + rightX * side, y: elevation + y, z: feet.z + rightZ * side })),
+  );
+}
+
 /** 세워 놓은 그림에서 캐릭터를 가릴 수 있는 부분. 그림 크기에 견준 비율로 적는다. */
 export interface CoverPart {
   /** 가리는 부분의 아래와 위(그림 높이에 견준 비율, 0이 땅). */

@@ -1,5 +1,5 @@
 import type { HeroClip } from '../../data/sprites';
-import type { CollisionSpace, SpriteAnimator } from '../capabilities';
+import type { WalkableSpace, SpriteAnimator } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import { DiagonalFacing, type FacingRule } from '../logic/facing';
 import type { Facing } from '../logic/movement';
@@ -14,7 +14,7 @@ export class Hero extends Character<HeroClip> {
   constructor(
     sprite: SpriteAnimator<HeroClip>,
     body: CharacterBody,
-    space: CollisionSpace,
+    space: WalkableSpace,
     controller: CharacterController,
     start: Readonly<Vec2>,
     facing: FacingRule = new DiagonalFacing(),

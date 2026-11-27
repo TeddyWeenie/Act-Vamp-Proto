@@ -30,18 +30,24 @@ export interface BuildingSkin {
 
 /** 재질 몇 개의 불투명도를 함께 바꾸는 겉모습. 옅어질 때는 깊이를 쓰지 않아 뒤의 캐릭터가 비친다. */
 export class FadingSkin implements BuildingSkin {
-  constructor(private readonly materials: readonly Material[]) {}
+  /** 오려 낸 그림(alphaTest)은 옅어질 때 기준도 함께 낮춰야 통째로 사라지지 않는다. */
+  private readonly cutouts: readonly number[];
+
+  constructor(private readonly materials: readonly Material[]) {
+    this.cutouts = materials.map((material) => material.alphaTest);
+  }
 
   setOpacity(opacity: number): void {
     const faded = opacity < 1;
-    for (const material of this.materials) {
+    this.materials.forEach((material, i) => {
       if (material.transparent !== faded) {
         material.transparent = faded;
         material.depthWrite = !faded;
         material.needsUpdate = true;
       }
       material.opacity = opacity;
-    }
+      material.alphaTest = this.cutouts[i]! * opacity;
+    });
   }
 }
 

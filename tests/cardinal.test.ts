@@ -1,7 +1,7 @@
 import { Group } from 'three';
 import { describe, expect, it } from 'vitest';
 import { LUCIEN_CARDINAL, type CardinalClip } from '../src/data/sprites';
-import type { CollisionSpace, SpriteAnimator } from '../src/game/capabilities';
+import type { WalkableSpace, SpriteAnimator } from '../src/game/capabilities';
 import type { CharacterController, MoveIntent } from '../src/game/control/controller';
 import { CardinalHero } from '../src/game/entities/CardinalHero';
 import { CardinalFacing } from '../src/game/logic/facing';
@@ -84,9 +84,10 @@ class ScriptedController implements CharacterController {
   stop(): void {}
 }
 
-const openField: CollisionSpace = {
+const openField: WalkableSpace = {
   move: (from, dir, distance) => ({ x: from.x + dir.x * distance, z: from.z + dir.z * distance }),
   clamp: (point) => ({ ...point }),
+  heightAt: () => 0,
 };
 
 function setup() {

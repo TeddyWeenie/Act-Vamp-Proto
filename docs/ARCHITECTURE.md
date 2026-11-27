@@ -37,7 +37,7 @@ tests/                     단위 테스트
 
 - `Entity`는 장면에 놓이는 모든 것의 추상 클래스입니다. `World`는 건물인지 캐릭터인지 묻지 않고 `root`를 무대에 올리고 `update`만 부릅니다.
 - `Character`는 걸어 다니는 캐릭터의 추상 클래스입니다. 위치, 방향, 상태 전환은 여기서 처리하고, "자세를 어떤 그림으로 보여 줄지"만 비워 둡니다.
-- `capabilities.ts`의 인터페이스는 상대가 무엇인지 대신 무엇을 할 수 있는지만 말합니다. 길을 막는 것(`Obstacle`), 가리는 것(`Occluder`), 걸을 수 있는 공간(`CollisionSpace`), 동작 그림(`SpriteAnimator`) 등입니다.
+- `capabilities.ts`의 인터페이스는 상대가 무엇인지 대신 무엇을 할 수 있는지만 말합니다. 길을 막는 것(`Obstacle`), 딛고 올라설 것(`Raised`), 가리는 것(`Occluder`), 걸을 수 있는 공간(`CollisionSpace`)과 바닥 높이(`Terrain`), 동작 그림(`SpriteAnimator`) 등입니다.
 
 ### 상속
 
@@ -46,7 +46,7 @@ Entity
 ├─ Character (추상)
 │   ├─ CardinalHero    앞·뒤·왼쪽·오른쪽 그림을 가진 주인공(기본)
 │   └─ Hero            앞·뒤 3/4 그림을 뒤집어 쓰는 주인공(예전 쿼터뷰, 비교용)
-├─ Building            길을 막고, 캐릭터를 가리면 옅어진다. 정면에 따로 그린 조각(문, 꽃 상자, 등불)을 단다
+├─ Building            벽은 길을 막고 계단은 밟고 올라서게 하며, 캐릭터를 가리면 옅어진다. 정면에 따로 그린 조각(문, 꽃 상자, 등불)을 단다
 ├─ Ground              바닥
 └─ MoveMarker          클릭 이동 목적지 표시
 
@@ -84,7 +84,7 @@ BaseLook (추상)
 | 원칙 | 적용 |
 | --- | --- |
 | 단일 책임 | `Game`은 박자, `World`는 등록과 진행, `CollisionMap`은 충돌, `OcclusionSystem`은 가림, `GameFactory`는 조립만 맡습니다. 불러오기(`SpriteFactory`, `ModelLibrary`)와 보여 주기(`SpriteView`, `Building`)도 나눴습니다. |
-| 개방-폐쇄 | 새 물체는 `Entity`를 상속해 `world.add()`하면 끝입니다. `World`가 능력(`isObstacle`, `isOccluder`)을 보고 알맞은 곳에 등록하므로 기존 클래스를 고치지 않습니다. 새 행동은 상태 클래스, 새 조종은 `MoveSource`, 새 화면 느낌은 `SceneLook` 구현을 더합니다. |
+| 개방-폐쇄 | 새 물체는 `Entity`를 상속해 `world.add()`하면 끝입니다. `World`가 능력(`isObstacle`, `isRaised`, `isOccluder`)을 보고 알맞은 곳에 등록하므로 기존 클래스를 고치지 않습니다. 새 행동은 상태 클래스, 새 조종은 `MoveSource`, 새 화면 느낌은 `SceneLook` 구현을 더합니다. |
 | 리스코프 치환 | `Entity`가 필요한 곳에는 어떤 하위 클래스든, `SpriteAnimator`가 필요한 곳에는 실제 스프라이트든 테스트용 가짜든 그대로 들어갑니다. 테스트가 이것을 확인합니다. |
 | 인터페이스 분리 | 입력은 `AxisInput`, `ActionInput`, `PointerInput`, `ZoomInput`으로, 화면 느낌은 `SpriteLook`, `BuildingLook`, `GroundLook`, `FrameLook`으로 나눠 쓰는 쪽이 필요한 것만 받습니다. |
 | 의존성 역전 | `Character`는 `CollisionSpace`, `CharacterController`, `SpriteAnimator` 인터페이스에만 기대고, 실제 구현은 `GameFactory`가 생성자로 넣어 줍니다. 그래서 캐릭터 로직을 브라우저 없이 테스트할 수 있습니다. |
@@ -101,7 +101,8 @@ BaseLook (추상)
 ## 성능을 위해 지키는 것
 
 - 매 프레임 불리는 곳에서는 객체를 새로 만들지 않고 계산용 벡터를 다시 씁니다(`Building`, `QuarterCamera`).
-- 가림 검사는 주인공이 움직였을 때만 다시 합니다. 먼저 상자로 걸러 내고, 걸린 건물만 실제 메시로 확인합니다.
+- 가림 검사는 주인공이 움직였을 때만 다시 합니다. 몸 가운데와 좌우 끝을 살피되, 먼저 상자로 걸러 내고 걸린 건물만 실제 메시로 확인합니다.
+- 바닥 높이는 건물의 겉 상자 안에 들어섰을 때만 메시에 선을 쏘아 잽니다.
 - 스프라이트는 프레임이 바뀔 때만 텍스처 좌표를 다시 씁니다.
 - 같은 모델 파일은 한 번만 내려받고, 그림자 텍스처는 한 장을 함께 씁니다.
 - 상태 객체는 자기 데이터가 없어서 모든 캐릭터가 같은 객체를 함께 씁니다.

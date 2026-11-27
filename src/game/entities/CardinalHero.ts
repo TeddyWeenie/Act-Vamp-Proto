@@ -1,5 +1,5 @@
 import type { CardinalClip } from '../../data/sprites';
-import type { CollisionSpace, SpriteAnimator } from '../capabilities';
+import type { WalkableSpace, SpriteAnimator } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import { CardinalFacing, type FacingRule } from '../logic/facing';
 import type { Facing } from '../logic/movement';
@@ -28,7 +28,7 @@ export class CardinalHero extends Character<CardinalClip> {
   constructor(
     sprite: SpriteAnimator<CardinalClip>,
     body: CharacterBody,
-    space: CollisionSpace,
+    space: WalkableSpace,
     controller: CharacterController,
     start: Readonly<Vec2>,
     facing: FacingRule = new CardinalFacing(),

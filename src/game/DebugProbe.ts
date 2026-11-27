@@ -11,6 +11,7 @@ export class DebugProbe {
   debugState() {
     return {
       position: { ...this.hero.position },
+      elevation: Number(this.hero.elevation.toFixed(3)),
       facing: { ...this.hero.facing },
       clip: this.hero.clip,
       opacities: this.buildings.map((building) => Number(building.opacity.toFixed(3))),

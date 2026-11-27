@@ -1,7 +1,7 @@
 import { LUCIEN_BODY } from '../../data/characters';
 import { LUCIEN } from '../../data/sprites';
 import { PLAYER_START, TOWN, TOWN_BOUNDS } from '../../data/town';
-import type { CollisionSpace } from '../capabilities';
+import type { WalkableSpace } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import type { Character } from '../entities/Character';
 import { Hero } from '../entities/Hero';
@@ -20,7 +20,7 @@ export class QuarterStaging implements Staging {
 
   async createHero(
     sprites: SpriteSource,
-    space: CollisionSpace,
+    space: WalkableSpace,
     controller: CharacterController,
   ): Promise<Character<string>> {
     const sprite = await sprites.create(LUCIEN, 'idle');

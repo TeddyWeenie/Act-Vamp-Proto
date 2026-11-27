@@ -1,6 +1,6 @@
 import { Group } from 'three';
 import { describe, expect, it } from 'vitest';
-import type { CollisionSpace, SpriteAnimator } from '../src/game/capabilities';
+import type { SpriteAnimator, WalkableSpace } from '../src/game/capabilities';
 import type { CharacterController, MoveIntent } from '../src/game/control/controller';
 import { Hero } from '../src/game/entities/Hero';
 import type { Vec2 } from '../src/game/logic/view';
@@ -20,8 +20,8 @@ class FakeSprite implements SpriteAnimator<HeroClip> {
   faceLeft(left: boolean): void {
     this.left = left;
   }
-  setPosition(x: number, z: number): void {
-    this.root.position.set(x, 0, z);
+  setPosition(x: number, z: number, height: number): void {
+    this.root.position.set(x, height, z);
   }
   update(): void {}
 }
@@ -44,18 +44,21 @@ class ScriptedController implements CharacterController {
   }
 }
 
-const openField: CollisionSpace = {
+const openField: WalkableSpace = {
   move: (from, dir, distance) => ({ x: from.x + dir.x * distance, z: from.z + dir.z * distance }),
   clamp: (point) => ({ ...point }),
+  heightAt: () => 0,
 };
-const wall: CollisionSpace = { move: (from) => ({ ...from }), clamp: (point) => ({ ...point }) };
+const wall: WalkableSpace = { ...openField, move: (from) => ({ ...from }) };
+/** x가 1을 넘으면 높이 0.5인 단이 있는 들판. */
+const fieldWithStep: WalkableSpace = { ...openField, heightAt: (point) => (point.x > 1 ? 0.5 : 0) };
 
 const BODY = { speed: 4, radius: 0.4, height: 2 };
 const START: Vec2 = { x: 0, z: 0 };
 const TOWARD_CAMERA: MoveIntent = { dir: { x: Math.SQRT1_2, z: Math.SQRT1_2 }, maxDistance: Infinity };
 const AWAY_FROM_CAMERA: MoveIntent = { dir: { x: -Math.SQRT1_2, z: -Math.SQRT1_2 }, maxDistance: Infinity };
 
-function setup(space: CollisionSpace = openField) {
+function setup(space: WalkableSpace = openField) {
   const sprite = new FakeSprite();
   const controller = new ScriptedController();
   const hero = new Hero(sprite, BODY, space, controller, START);
@@ -159,5 +162,29 @@ describe('주인공의 행동 상태', () => {
     hero.placeAt({ x: 3, z: -2 });
     expect(hero.position).toEqual({ x: 3, z: -2 });
     expect(controller.stops).toBe(1);
+  });
+});
+
+describe('계단 오르기', () => {
+  const EAST: MoveIntent = { dir: { x: 1, z: 0 }, maxDistance: Infinity };
+
+  it('단 위로 걸어 들어가면 그림이 그 높이로 올라선다', () => {
+    const { sprite, controller, hero, tick } = setup(fieldWithStep);
+    expect(sprite.root.position.y).toBe(0);
+    controller.intent = EAST;
+    tick(4);
+    expect(hero.position.x).toBeGreaterThan(1);
+    expect(hero.elevation).toBe(0.5);
+    expect(sprite.root.position.y).toBe(0.5);
+  });
+
+  it('단에서 내려오면 다시 땅에 선다', () => {
+    const { sprite, controller, hero, tick } = setup(fieldWithStep);
+    hero.placeAt({ x: 2, z: 0 });
+    tick();
+    expect(sprite.root.position.y).toBe(0.5);
+    controller.intent = { dir: { x: -1, z: 0 }, maxDistance: Infinity };
+    tick(4);
+    expect(sprite.root.position.y).toBe(0);
   });
 });

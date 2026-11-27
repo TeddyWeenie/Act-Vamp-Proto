@@ -29,7 +29,17 @@
       } else cam.position.set(c.x, c.y, c.z + 3);
       cam.lookAt(c);
       r.render(scene, cam);
-      window.__done = { size: s.toArray(), min: b.min.toArray(), max: b.max.toArray() };
+      // 계단 모양 재기: 문 가운데에서 정면 끝부터 안쪽으로 가며 아래로 선을 쏘아 바닥 높이를 잰다(건물 높이가 1).
+      const ray = new THREE.Raycaster();
+      const profile = [];
+      for (let i = 0; i <= 60; i++) {
+        const fromFront = (i / 60) * 0.3;
+        ray.set(new THREE.Vector3(c.x, b.min.y + 0.2 * s.y, b.max.z - fromFront * s.z), new THREE.Vector3(0, -1, 0));
+        const hit = ray.intersectObject(g.scene, true)[0];
+        profile.push([+fromFront.toFixed(3), hit ? +((hit.point.y - b.min.y) / s.y).toFixed(3) : 0]);
+      }
+      window.__done = {
+        profile, size: s.toArray(), min: b.min.toArray(), max: b.max.toArray() };
     </script>
   </body>
 </html>

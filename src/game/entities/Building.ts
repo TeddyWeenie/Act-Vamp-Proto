@@ -1,20 +1,28 @@
 import { Box3, Group, Mesh, Raycaster, Vector3, type Intersection, type Object3D } from 'three';
 import type { BuildingPlacement } from '../../data/town';
 import { ORDER, type BuildingLook, type BuildingSkin } from '../../render/look';
-import type { Obstacle, Occluder, OcclusionTarget } from '../capabilities';
+import type { Obstacle, Occluder, OcclusionTarget, Raised } from '../capabilities';
 import type { Footprint } from '../logic/movement';
-import { approach, isOccluded, type Box3D } from '../logic/occlusion';
-import type { Vec3 } from '../logic/view';
+import { approach, bodyProbes, rayHitsBox, type Box3D } from '../logic/occlusion';
+import type { Vec2, Vec3 } from '../logic/view';
 import { Entity } from './Entity';
 
-/** 지붕 처마는 걸어 지나갈 수 있으므로, 충돌에 쓰는 바닥 면적은 겉 상자보다 조금 줄인다. */
+/** 벽을 찾지 못했을 때만 쓰는 어림값: 겉 상자를 이 비율만큼 줄여 처마 밑을 지나가게 한다. */
 const FOOTPRINT_SHRINK = 0.12;
+/** 벽을 찾는 선의 높이(건물 높이에 견준 값). 계단과 기단보다 높고 처마보다 낮다. */
+const WALL_PROBE_HEIGHT = 0.3;
+/** 벽 한 면을 따라 선을 쏘는 자리. 가운데는 문간처럼 들어간 곳일 수 있어 여러 곳에서 가장 바깥을 고른다. */
+const WALL_PROBE_SPOTS = [0.25, 0.5, 0.75];
+/** 이보다 낮은 윗면은 계단처럼 밟고 올라선다. 더 높은 것은 벽이다. */
+const STEP_REACH = 1.0;
+
+const DOWN = new Vector3(0, -1, 0);
 
 /**
- * 마을의 건물. 길을 막고, 캐릭터를 가리면 스스로 옅어진다.
+ * 마을의 건물. 벽은 길을 막고, 문 앞 계단은 밟고 올라설 수 있으며, 캐릭터를 가리면 스스로 옅어진다.
  * 옅어질 때는 깊이만 먼저 그린 뒤 색을 덧그려 건물 안쪽 면이 비치지 않게 한다.
  */
-export class Building extends Entity implements Obstacle, Occluder {
+export class Building extends Entity implements Obstacle, Occluder, Raised {
   readonly footprint: Footprint;
 
   private readonly box: Box3D;
@@ -23,6 +31,7 @@ export class Building extends Entity implements Obstacle, Occluder {
   private readonly drawnMeshes: Mesh[] = [];
   private readonly depthMeshes: Mesh[] = [];
   private readonly raycaster = new Raycaster();
+  private readonly stepProbe = new Raycaster(new Vector3(), DOWN, 0, STEP_REACH);
   // 매번 새로 만들지 않고 다시 쓰는 계산용 객체.
   private readonly rayOrigin = new Vector3();
   private readonly rayDirection = new Vector3();
@@ -75,18 +84,11 @@ export class Building extends Entity implements Obstacle, Occluder {
     this.root.updateMatrixWorld(true);
 
     const world = new Box3().setFromObject(model);
-    const width = world.max.x - world.min.x;
-    const depth = world.max.z - world.min.z;
     this.box = {
       min: { x: world.min.x, y: world.min.y, z: world.min.z },
       max: { x: world.max.x, y: world.max.y, z: world.max.z },
     };
-    this.footprint = {
-      minX: world.min.x + width * FOOTPRINT_SHRINK,
-      maxX: world.max.x - width * FOOTPRINT_SHRINK,
-      minZ: world.min.z + depth * FOOTPRINT_SHRINK,
-      maxZ: world.max.z - depth * FOOTPRINT_SHRINK,
-    };
+    this.footprint = this.measureWalls(world);
 
     this.root.add(
       look.groundShadow({
@@ -99,17 +101,39 @@ export class Building extends Entity implements Obstacle, Occluder {
     );
   }
 
+  /**
+   * 그 자리에 계단처럼 낮은 윗면이 있으면 그 높이를 알려 준다.
+   * 처마 아래로만 선을 쏘므로 지붕은 잡히지 않는다.
+   */
+  floorAt(point: Readonly<Vec2>): number {
+    const { min, max } = this.box;
+    if (point.x < min.x || point.x > max.x || point.z < min.z || point.z > max.z) return 0;
+    this.stepProbe.ray.origin.set(point.x, STEP_REACH, point.z);
+    this.hits.length = 0;
+    const hit = this.stepProbe.intersectObjects(this.bodyMeshes, false, this.hits)[0];
+    return hit ? Math.max(0, hit.point.y) : 0;
+  }
+
   get opacity(): number {
     return this.currentOpacity;
   }
 
-  /** 먼저 상자로 걸러 내고, 걸리면 실제 메시에 선을 쏴서 박공지붕 옆 빈 곳을 가려 낸다. */
+  /**
+   * 몸 가운데와 좌우 끝을 발목, 허리, 머리 높이에서 살펴 하나라도 가려지면 가린 것으로 본다.
+   * 먼저 상자로 걸러 내고, 걸리면 실제 메시에 선을 쏴서 박공지붕 옆 빈 곳을 가려 낸다.
+   */
   occludes(target: OcclusionTarget, towardCamera: Vec3): boolean {
-    const { position, occlusionHeights } = target;
-    if (!isOccluded(position, occlusionHeights, towardCamera, this.box)) return false;
+    const probes = bodyProbes(
+      target.position,
+      target.occlusionHeights,
+      target.elevation,
+      target.halfWidth,
+      towardCamera,
+    );
     this.rayDirection.set(towardCamera.x, towardCamera.y, towardCamera.z);
-    for (const y of occlusionHeights) {
-      this.raycaster.set(this.rayOrigin.set(position.x, y, position.z), this.rayDirection);
+    for (const probe of probes) {
+      if (!rayHitsBox(probe, towardCamera, this.box)) continue;
+      this.raycaster.set(this.rayOrigin.set(probe.x, probe.y, probe.z), this.rayDirection);
       this.hits.length = 0;
       if (this.raycaster.intersectObjects(this.bodyMeshes, false, this.hits).length > 0) return true;
     }
@@ -130,5 +154,62 @@ export class Building extends Entity implements Obstacle, Occluder {
     this.faded = faded;
     for (const mesh of this.drawnMeshes) mesh.renderOrder = faded ? ORDER.fadedColor : 0;
     for (const mesh of this.depthMeshes) mesh.visible = faded;
+  }
+
+  /**
+   * 길을 막는 자리는 겉 상자가 아니라 실제 벽이다. 네 면 바깥에서 안쪽으로 선을 쏘아 벽이 선 자리를 잰다.
+   * 그래야 처마 밑과 문 앞 계단을 걸을 수 있고, 문 바로 앞까지 다가설 수 있다.
+   */
+  private measureWalls(world: Box3): Footprint {
+    const width = world.max.x - world.min.x;
+    const depth = world.max.z - world.min.z;
+    const y = world.min.y + (world.max.y - world.min.y) * WALL_PROBE_HEIGHT;
+    const along = (from: number, length: number) => WALL_PROBE_SPOTS.map((spot) => from + length * spot);
+    const xs = along(world.min.x, width);
+    const zs = along(world.min.z, depth);
+
+    const west = this.wallHits(
+      zs.map((z) => [world.min.x - 1, y, z]),
+      1,
+      0,
+    );
+    const east = this.wallHits(
+      zs.map((z) => [world.max.x + 1, y, z]),
+      -1,
+      0,
+    );
+    const north = this.wallHits(
+      xs.map((x) => [x, y, world.min.z - 1]),
+      0,
+      1,
+    );
+    const south = this.wallHits(
+      xs.map((x) => [x, y, world.max.z + 1]),
+      0,
+      -1,
+    );
+    return {
+      minX: west.length ? Math.min(...west.map((hit) => hit.x)) : world.min.x + width * FOOTPRINT_SHRINK,
+      maxX: east.length ? Math.max(...east.map((hit) => hit.x)) : world.max.x - width * FOOTPRINT_SHRINK,
+      minZ: north.length ? Math.min(...north.map((hit) => hit.z)) : world.min.z + depth * FOOTPRINT_SHRINK,
+      maxZ: south.length ? Math.max(...south.map((hit) => hit.z)) : world.max.z - depth * FOOTPRINT_SHRINK,
+    };
+  }
+
+  /** 주어진 자리들에서 수평으로 선을 쏘아 처음 닿은 벽의 위치를 모은다. */
+  private wallHits(
+    origins: readonly (readonly [number, number, number])[],
+    dirX: number,
+    dirZ: number,
+  ): Vector3[] {
+    const found: Vector3[] = [];
+    this.rayDirection.set(dirX, 0, dirZ);
+    for (const [x, y, z] of origins) {
+      this.raycaster.set(this.rayOrigin.set(x, y, z), this.rayDirection);
+      this.hits.length = 0;
+      const hit = this.raycaster.intersectObjects(this.bodyMeshes, false, this.hits)[0];
+      if (hit) found.push(hit.point.clone());
+    }
+    return found;
   }
 }

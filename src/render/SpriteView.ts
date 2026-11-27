@@ -68,8 +68,8 @@ export class SpriteView<Name extends string> implements SpriteAnimator<Name> {
     this.apply();
   }
 
-  setPosition(x: number, z: number): void {
-    this.root.position.set(x, 0, z);
+  setPosition(x: number, z: number, height: number): void {
+    this.root.position.set(x, height, z);
   }
 
   update(dt: number): void {

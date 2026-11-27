@@ -1,4 +1,4 @@
-import { isObstacle, isOccluder, type Stage, type Updatable } from './capabilities';
+import { isObstacle, isOccluder, isRaised, type Stage, type Updatable } from './capabilities';
 import type { Entity } from './entities/Entity';
 import type { CollisionMap } from './systems/CollisionMap';
 import type { OcclusionSystem } from './systems/OcclusionSystem';
@@ -21,6 +21,7 @@ export class World implements Updatable {
     this.entities.push(entity);
     this.stage.add(entity.root);
     if (isObstacle(entity)) this.collisions.add(entity);
+    if (isRaised(entity)) this.collisions.raise(entity);
     if (isOccluder(entity)) this.occlusion.add(entity);
     return entity;
   }

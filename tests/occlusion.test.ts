@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { approach, isOccluded, rayHitsBox, type Box3D } from '../src/game/logic/occlusion';
-import { towardCamera } from '../src/game/logic/view';
+import { approach, bodyProbes, isOccluded, rayHitsBox, type Box3D } from '../src/game/logic/occlusion';
+import { topView, towardCamera } from '../src/game/logic/view';
 
 const house: Box3D = { min: { x: -1, y: 0, z: -1 }, max: { x: 1, y: 4, z: 1 } };
 const cam = towardCamera();
@@ -46,5 +46,34 @@ describe('불투명도 변화', () => {
     let slow = 1;
     for (let i = 0; i < 4; i++) slow = approach(slow, 0.3, 1 / 20);
     expect(fast).toBeCloseTo(slow, 6);
+  });
+});
+
+describe('몸의 어디를 살필지', () => {
+  const top = topView(50);
+  const fromSouth = towardCamera(top.elevation, top.azimuth);
+
+  it('가운데와 화면에서 본 좌우 끝을 높이마다 살핀다', () => {
+    const probes = bodyProbes({ x: 2, z: 3 }, [0.25, 1.9], 0, 0.4, fromSouth);
+    expect(probes).toHaveLength(6);
+    // 탑뷰에서는 화면의 좌우가 월드의 X축이다.
+    expect(probes.map((probe) => +probe.x.toFixed(3)).sort()).toEqual([1.6, 1.6, 2, 2, 2.4, 2.4]);
+    for (const probe of probes) expect(probe.z).toBeCloseTo(3);
+  });
+
+  it('계단 위에 서 있으면 그만큼 높은 곳을 살핀다', () => {
+    const probes = bodyProbes({ x: 0, z: 0 }, [0.25, 1.9], 0.6, 0, fromSouth);
+    expect(probes.map((probe) => probe.y)).toEqual([0.85, 2.5]);
+  });
+
+  it('몸 가운데는 처마 밖이어도 한쪽 끝이 처마 밑이면 가려진 것을 알아챈다', () => {
+    // 오른쪽에 선 집의 처마: x가 0.3보다 큰 곳을 위에서 덮는다.
+    const eaveToTheRight: Box3D = { min: { x: 0.3, y: 3, z: -3 }, max: { x: 4, y: 4, z: 3 } };
+    const hidden = (halfWidth: number) =>
+      bodyProbes({ x: 0, z: -1 }, [1.9], 0, halfWidth, fromSouth).some((probe) =>
+        rayHitsBox(probe, fromSouth, eaveToTheRight),
+      );
+    expect(hidden(0)).toBe(false);
+    expect(hidden(0.45)).toBe(true);
   });
 });

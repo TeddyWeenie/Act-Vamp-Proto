@@ -1,4 +1,4 @@
-import type { CollisionSpace, OcclusionTarget, SpriteAnimator } from '../capabilities';
+import type { OcclusionTarget, SpriteAnimator, WalkableSpace } from '../capabilities';
 import type { CharacterController, MoveIntent } from '../control/controller';
 import type { FacingRule } from '../logic/facing';
 import type { Facing } from '../logic/movement';
@@ -42,7 +42,7 @@ export abstract class Character<Clip extends string>
   protected constructor(
     private readonly sprite: SpriteAnimator<Clip>,
     private readonly body: CharacterBody,
-    private readonly space: CollisionSpace,
+    private readonly space: WalkableSpace,
     readonly controller: CharacterController,
     start: Readonly<Vec2>,
     private readonly facingRule: FacingRule,
@@ -51,11 +51,20 @@ export abstract class Character<Clip extends string>
     this.current = { x: start.x, z: start.z };
     this.direction = facingRule.initial;
     this.occlusionHeights = [0.25, body.height * 0.55, body.height * 0.95];
-    this.sprite.setPosition(start.x, start.z);
+    this.sprite.setPosition(start.x, start.z, this.elevation);
   }
 
   get position(): Readonly<Vec2> {
     return this.current;
+  }
+
+  /** 발이 놓인 높이. 평지에서는 0이고 계단 위에서는 그 단의 높이다. */
+  get elevation(): number {
+    return this.space.heightAt(this.current, this.body.radius);
+  }
+
+  get halfWidth(): number {
+    return this.body.radius;
   }
 
   get facing(): Readonly<Facing> {
@@ -98,7 +107,7 @@ export abstract class Character<Clip extends string>
       next.enter(this);
     }
     this.sprite.faceLeft(this.direction.left);
-    this.sprite.setPosition(this.current.x, this.current.z);
+    this.sprite.setPosition(this.current.x, this.current.z, this.elevation);
     this.sprite.update(dt);
   }
 
