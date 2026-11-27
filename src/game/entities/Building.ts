@@ -18,7 +18,7 @@ export class Building extends Entity implements Obstacle, Occluder {
   readonly footprint: Footprint;
 
   private readonly box: Box3D;
-  private readonly skin: BuildingSkin;
+  private readonly skins: BuildingSkin[];
   private readonly bodyMeshes: Mesh[] = [];
   private readonly drawnMeshes: Mesh[] = [];
   private readonly depthMeshes: Mesh[] = [];
@@ -35,6 +35,7 @@ export class Building extends Entity implements Obstacle, Occluder {
     model: Object3D,
     placement: BuildingPlacement,
     private readonly look: BuildingLook,
+    fittings: readonly Mesh[] = [],
   ) {
     super(new Group());
 
@@ -42,7 +43,13 @@ export class Building extends Entity implements Obstacle, Occluder {
     model.traverse((node) => {
       if (node instanceof Mesh) this.bodyMeshes.push(node);
     });
-    this.skin = look.dress(model);
+    this.skins = [look.dress(model)];
+    // 따로 그린 조각(문, 꽃 상자)은 몸체가 아니라서 길을 막거나 캐릭터를 가리는 검사에는 들어가지 않고,
+    // 건물과 함께 옅어지기만 한다.
+    for (const piece of fittings) {
+      this.skins.push(look.dressFitting(piece));
+      model.add(piece);
+    }
     model.traverse((node) => {
       if (node instanceof Mesh) this.drawnMeshes.push(node);
     });
@@ -117,7 +124,7 @@ export class Building extends Entity implements Obstacle, Occluder {
     const target = this.occluding ? this.look.fadedOpacity : 1;
     if (this.currentOpacity === target) return;
     this.currentOpacity = approach(this.currentOpacity, target, dt, this.look.fadeRate);
-    this.skin.setOpacity(this.currentOpacity);
+    for (const skin of this.skins) skin.setOpacity(this.currentOpacity);
     const faded = this.currentOpacity < 1;
     if (faded === this.faded) return;
     this.faded = faded;

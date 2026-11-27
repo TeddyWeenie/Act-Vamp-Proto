@@ -4,6 +4,7 @@ import {
   MeshBasicMaterial,
   type Camera,
   type Material,
+  type Mesh,
   type Object3D,
   type Scene,
   type Texture,
@@ -25,6 +26,23 @@ export const ORDER = {
 export interface BuildingSkin {
   /** 1이면 보통, 그보다 작으면 몸체와 외곽선이 함께 옅어지고 깊이를 쓰지 않는다. */
   setOpacity(opacity: number): void;
+}
+
+/** 재질 몇 개의 불투명도를 함께 바꾸는 겉모습. 옅어질 때는 깊이를 쓰지 않아 뒤의 캐릭터가 비친다. */
+export class FadingSkin implements BuildingSkin {
+  constructor(private readonly materials: readonly Material[]) {}
+
+  setOpacity(opacity: number): void {
+    const faded = opacity < 1;
+    for (const material of this.materials) {
+      if (material.transparent !== faded) {
+        material.transparent = faded;
+        material.depthWrite = !faded;
+        material.needsUpdate = true;
+      }
+      material.opacity = opacity;
+    }
+  }
 }
 
 /** 물체가 땅에서 차지하는 자리(건물이면 처마를 뺀 벽)와 높이. 바닥 그림자를 만들 때 쓴다. */
@@ -60,6 +78,11 @@ export interface BuildingLook {
   readonly fadeRate: number;
   /** 모델의 재질을 이 화면 느낌으로 갈아입힌다. */
   dress(model: Object3D): BuildingSkin;
+  /**
+   * 건물 정면에 따로 붙이는 조각(문, 꽃 상자, 등불)에 재질을 입힌다.
+   * 조각이 들고 온 그림을 그대로 쓰고, 종이를 오린 것처럼 가장자리를 또렷하게 잘라 낸다.
+   */
+  dressFitting(piece: Mesh): BuildingSkin;
   /** 옅어진 건물의 안쪽 면이 비치지 않도록 깊이만 먼저 쓰는 재질. */
   depthOnlyMaterial(): Material;
   /** 건물이 땅에 붙어 보이도록 바닥에 까는 그림자. 월드 좌표에 놓인 물체를 돌려준다. */
@@ -98,6 +121,13 @@ export abstract class BaseLook implements SceneLook {
 
   propMaterial(map: Texture): MeshBasicMaterial {
     return this.spriteMaterial(map);
+  }
+
+  dressFitting(piece: Mesh): BuildingSkin {
+    const map = (piece.material as { map?: Texture | null }).map ?? null;
+    const material = new MeshBasicMaterial({ map, alphaTest: 0.5 });
+    piece.material = material;
+    return new FadingSkin([material]);
   }
 
   depthOnlyMaterial(): Material {

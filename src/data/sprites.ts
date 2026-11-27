@@ -90,9 +90,10 @@ const breath = { frames: 4, fps: 4.5, loop: true } as const;
  * 탑뷰용 리시엔(종이 오리기 화풍). 어느 방향에서나 칼은 오른손에 든다. 그래서 어떤 그림도 뒤집지 않는다.
  * 왼쪽을 볼 때는 칼 든 손이 몸 건너편에, 오른쪽을 볼 때는 화면 앞쪽에 온다.
  * scale은 방향과 자세가 바뀌어도 머리 크기와 키가 튀지 않도록 맞춘 값이다.
+ * 키는 집의 문과 비슷해 보이도록 잡았다(문보다 한참 작으면 집이 지나치게 커 보인다).
  */
 export const LUCIEN_CARDINAL: SpriteSheet<CardinalClip> = {
-  height: 2.0,
+  height: 2.4,
   clips: {
     frontIdle: { url: lucienTop('front-idle'), faces: 'center', ...breath, scale: 1 },
     frontWalk: { url: lucienTop('front-walk'), faces: 'center', ...walkLoop, scale: 1.08 },

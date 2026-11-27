@@ -1,4 +1,4 @@
-import { LUCIEN_BODY } from '../../data/characters';
+import { LUCIEN_TOP_BODY } from '../../data/characters';
 import { LUCIEN_CARDINAL } from '../../data/sprites';
 import { PLAYER_START, TOWN_TOP, TOWN_TOP_BOUNDS, type PropPlacement } from '../../data/town';
 import type { CollisionSpace } from '../capabilities';
@@ -17,7 +17,7 @@ export class TopStaging implements Staging {
   readonly angle: ViewAngle;
   readonly town = TOWN_TOP;
   readonly bounds = TOWN_TOP_BOUNDS;
-  /** 캐릭터가 화면 높이의 1/10쯤으로 보이는 거리. 건물과 한 그림으로 읽히게 한다. */
+  /** 캐릭터가 화면 높이의 1/8쯤으로 보이는 거리. 건물과 한 그림으로 읽히게 한다. */
   readonly viewHeight = 13.5;
   readonly heroHeight = LUCIEN_CARDINAL.height;
 
@@ -39,6 +39,6 @@ export class TopStaging implements Staging {
   ): Promise<Character<string>> {
     const sprite = await sprites.create(LUCIEN_CARDINAL, 'frontIdle');
     const facing = new CardinalFacing(this.angle.azimuth);
-    return new CardinalHero(sprite, LUCIEN_BODY, space, controller, PLAYER_START, facing);
+    return new CardinalHero(sprite, LUCIEN_TOP_BODY, space, controller, PLAYER_START, facing);
   }
 }

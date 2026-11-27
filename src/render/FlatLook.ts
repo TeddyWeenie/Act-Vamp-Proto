@@ -11,28 +11,11 @@ import {
   type Texture,
 } from 'three';
 import { castShadowOutline } from '../game/logic/shadow';
-import { BaseLook, ORDER, type BuildingSkin, type GroundArea } from './look';
+import { BaseLook, FadingSkin, ORDER, type BuildingSkin, type GroundArea } from './look';
 
 /** 그림자 색. 캐릭터 그림의 선과 같은 어두운 자주색 계열이라 선과 그림자가 한 색으로 묶인다. */
 const SHADOW_COLOR = '21,9,16';
 const SHADOW_HEX = 0x150910;
-
-/** 조명 없이 텍스처 색을 그대로 쓰는 건물의 겉모습. */
-class FlatSkin implements BuildingSkin {
-  constructor(private readonly materials: readonly Material[]) {}
-
-  setOpacity(opacity: number): void {
-    const faded = opacity < 1;
-    for (const material of this.materials) {
-      if (material.transparent !== faded) {
-        material.transparent = faded;
-        material.depthWrite = !faded;
-        material.needsUpdate = true;
-      }
-      material.opacity = opacity;
-    }
-  }
-}
 
 /** 꾸밈 없는 화면: 조명과 후처리 없이 텍스처 색을 그대로 보여 준다. 비교와 저사양용. */
 export class FlatLook extends BaseLook {
@@ -66,7 +49,7 @@ export class FlatLook extends BaseLook {
       node.material = material;
       materials.push(material);
     });
-    return new FlatSkin(materials);
+    return new FadingSkin(materials);
   }
 
   /** 건물이 땅에 드리우는 평평한 그림자. 빛 반대쪽으로 건물 높이만큼 뻗는다. */

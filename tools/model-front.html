@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <body style="margin: 0; background: #888">
+    <canvas id="c" width="1000" height="1000"></canvas>
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      const px = Number(new URLSearchParams(location.search).get("px") ?? 1000); document.getElementById("c").width = px; document.getElementById("c").height = px;
+      const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+      r.outputColorSpace = THREE.SRGBColorSpace;
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x888888);
+      const g = await new GLTFLoader().loadAsync('/assets/models/townhouse.glb');
+      g.scene.traverse((n) => {
+        if (n.isMesh) n.material = new THREE.MeshBasicMaterial({ map: n.material.map });
+      });
+      scene.add(g.scene);
+      g.scene.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(g.scene);
+      const s = b.getSize(new THREE.Vector3());
+      const c = b.getCenter(new THREE.Vector3());
+      const cam = new THREE.OrthographicCamera(-s.x / 2, s.x / 2, s.y / 2, -s.y / 2, 0.01, 10);
+      const side = new URLSearchParams(location.search).get('side');
+      if (side) {
+        cam.left = -s.z / 2;
+        cam.right = s.z / 2;
+        cam.updateProjectionMatrix();
+        cam.position.set(c.x + 3, c.y, c.z);
+      } else cam.position.set(c.x, c.y, c.z + 3);
+      cam.lookAt(c);
+      r.render(scene, cam);
+      window.__done = { size: s.toArray(), min: b.min.toArray(), max: b.max.toArray() };
+    </script>
+  </body>
+</html>

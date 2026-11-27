@@ -1,7 +1,21 @@
+import type { FittingSpot } from '../game/logic/fitting';
 import type { Bounds } from '../game/logic/movement';
 
-export interface BuildingPlacement {
+/**
+ * 건물 정면에 따로 붙이는 종이 조각. 문고리나 꽃처럼 작은 장식은 3D 모델에 구워 넣으면 뭉개지므로,
+ * 모델에서는 빼고 따로 그린 그림을 벽 앞에 붙인다.
+ */
+export interface FittingPlacement extends FittingSpot {
+  image: string;
+}
+
+/** 건물 한 종류: 3D 모델과 그 정면에 붙는 조각들. */
+export interface BuildingKind {
   model: string;
+  fittings?: readonly FittingPlacement[];
+}
+
+export interface BuildingPlacement extends BuildingKind {
   x: number;
   z: number;
   /** 90도 단위 회전. 0이면 정면이 +Z, 1이면 +X를 본다. 쿼터뷰에서는 각각 화면 왼쪽 아래와 오른쪽 아래, 탑뷰에서는 화면 아래와 오른쪽이다. */
@@ -10,18 +24,28 @@ export interface BuildingPlacement {
   height: number;
 }
 
-/** 깔끔한 표면으로 다시 그린 민가. 집 종류가 늘면 여기에 모델을 더하고 아래 표에서 골라 쓴다. */
-const HOUSE = '/assets/models/townhouse.glb';
+/**
+ * 종이 오리기 화풍의 민가. 모델에는 문짝, 꽃 상자, 등불이 없고(문 자리는 어두운 빈 문간), 그 셋은 조각으로 붙는다.
+ * 집 종류가 늘면 여기에 종류를 더하고 아래 표에서 골라 쓴다.
+ */
+const HOUSE: BuildingKind = {
+  model: '/assets/models/townhouse.glb',
+  fittings: [
+    { image: '/assets/fittings/door.png', across: 0.504, bottom: 0.0865, height: 0.249, lift: 0.004 },
+    { image: '/assets/fittings/flowerbox.png', across: 0.5, bottom: 0.39, height: 0.108, lift: 0.02 },
+    { image: '/assets/fittings/lantern.png', across: 0.25, bottom: 0.2, height: 0.13, lift: 0.02 },
+  ],
+};
 
 /** 회색종 마을 광장의 임시 배치. 맵 설계가 정해지면 이 표만 바꾸면 된다. */
 export const TOWN: readonly BuildingPlacement[] = [
-  { model: HOUSE, x: -7.2, z: -2.6, quarterTurns: 1, height: 4.3 },
-  { model: HOUSE, x: -2.4, z: -7.4, quarterTurns: 0, height: 4.1 },
-  { model: HOUSE, x: 2.8, z: -8.0, quarterTurns: 0, height: 4.5 },
-  { model: HOUSE, x: -8.0, z: 3.0, quarterTurns: 1, height: 4.1 },
-  { model: HOUSE, x: 5.6, z: -2.4, quarterTurns: 1, height: 4.3 },
-  { model: HOUSE, x: 5.4, z: 5.0, quarterTurns: 0, height: 4.1 },
-  { model: HOUSE, x: -0.4, z: 7.4, quarterTurns: 1, height: 4.3 },
+  { ...HOUSE, x: -7.2, z: -2.6, quarterTurns: 1, height: 4.3 },
+  { ...HOUSE, x: -2.4, z: -7.4, quarterTurns: 0, height: 4.1 },
+  { ...HOUSE, x: 2.8, z: -8.0, quarterTurns: 0, height: 4.5 },
+  { ...HOUSE, x: -8.0, z: 3.0, quarterTurns: 1, height: 4.1 },
+  { ...HOUSE, x: 5.6, z: -2.4, quarterTurns: 1, height: 4.3 },
+  { ...HOUSE, x: 5.4, z: 5.0, quarterTurns: 0, height: 4.1 },
+  { ...HOUSE, x: -0.4, z: 7.4, quarterTurns: 1, height: 4.3 },
 ];
 
 /**
@@ -30,14 +54,14 @@ export const TOWN: readonly BuildingPlacement[] = [
  * 집 높이는 문이 캐릭터 키와 비슷해지도록 잡았다. 캐릭터가 문보다 크면 그림을 오려 붙인 것처럼 보인다.
  */
 export const TOWN_TOP: readonly BuildingPlacement[] = [
-  { model: HOUSE, x: -11.4, z: -8.6, quarterTurns: 0, height: 7.6 },
-  { model: HOUSE, x: -3.8, z: -9.0, quarterTurns: 0, height: 7.2 },
-  { model: HOUSE, x: 3.8, z: -8.6, quarterTurns: 0, height: 8.0 },
-  { model: HOUSE, x: 11.4, z: -9.0, quarterTurns: 0, height: 7.2 },
-  { model: HOUSE, x: -14.6, z: 0.4, quarterTurns: 1, height: 7.2 },
-  { model: HOUSE, x: 14.6, z: 1.0, quarterTurns: 3, height: 7.6 },
-  { model: HOUSE, x: -6.2, z: 10.0, quarterTurns: 2, height: 7.6 },
-  { model: HOUSE, x: 6.0, z: 9.6, quarterTurns: 0, height: 7.2 },
+  { ...HOUSE, x: -11.4, z: -8.6, quarterTurns: 0, height: 7.6 },
+  { ...HOUSE, x: -3.8, z: -9.0, quarterTurns: 0, height: 7.2 },
+  { ...HOUSE, x: 3.8, z: -8.6, quarterTurns: 0, height: 8.0 },
+  { ...HOUSE, x: 11.4, z: -9.0, quarterTurns: 0, height: 7.2 },
+  { ...HOUSE, x: -14.6, z: 0.4, quarterTurns: 1, height: 7.2 },
+  { ...HOUSE, x: 14.6, z: 1.0, quarterTurns: 3, height: 7.6 },
+  { ...HOUSE, x: -6.2, z: 10.0, quarterTurns: 2, height: 7.6 },
+  { ...HOUSE, x: 6.0, z: 9.6, quarterTurns: 0, height: 7.2 },
 ];
 
 /** 세워 놓는 소품 한 종류: 그림과 크기, 길을 막는 자리, 그림자, 캐릭터를 가리는 부분. */

@@ -1,5 +1,6 @@
 import { SRGBColorSpace, Scene, TextureLoader, WebGLRenderer } from 'three';
 import { ModelLibrary } from '../render/ModelLibrary';
+import { TextureLibrary } from '../render/TextureLibrary';
 import { SpriteFactory } from '../render/SpriteFactory';
 import { QuarterCamera } from '../render/camera';
 import type { SceneLook } from '../render/look';
@@ -50,7 +51,7 @@ export class GameFactory {
     const occlusion = new OcclusionSystem(towardCamera(angle.elevation, angle.azimuth));
     const world = new World(scene, collisions, occlusion);
 
-    const buildingFactory = new BuildingFactory(new ModelLibrary(), this.look);
+    const buildingFactory = new BuildingFactory(new ModelLibrary(), new TextureLibrary(), this.look);
     // 키보드가 먼저고, 누르지 않을 때만 클릭한 곳으로 걸어간다.
     const pointerMove = new PointerMove(input, view, collisions);
     const controller = new PlayerController([new KeyboardMove(input, angle.azimuth), pointerMove], input);

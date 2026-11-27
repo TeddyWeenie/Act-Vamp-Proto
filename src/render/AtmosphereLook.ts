@@ -2,6 +2,7 @@ import {
   OrthographicCamera,
   type Camera,
   type Material,
+  type Mesh,
   type MeshBasicMaterial,
   type Object3D,
   type Scene,
@@ -72,6 +73,10 @@ export class AtmosphereLook implements SceneLook {
 
   dress(model: Object3D): BuildingSkin {
     return this.inner.dress(model);
+  }
+
+  dressFitting(piece: Mesh): BuildingSkin {
+    return this.inner.dressFitting(piece);
   }
 
   depthOnlyMaterial(): Material {
