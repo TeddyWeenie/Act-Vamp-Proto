@@ -12,6 +12,7 @@ import { PointerMove } from './control/PointerMove';
 import { BuildingFactory } from './entities/BuildingFactory';
 import { Ground } from './entities/Ground';
 import { MoveMarker } from './entities/MoveMarker';
+import { Prop } from './entities/Prop';
 import { DomInput } from './input';
 import { towardCamera } from './logic/view';
 import type { Staging } from './staging/Staging';
@@ -42,7 +43,7 @@ export class GameFactory {
     renderer.outputColorSpace = SRGBColorSpace;
     const scene = new Scene();
 
-    const { angle, town, bounds, viewHeight } = this.staging;
+    const { angle, town, props, bounds, viewHeight } = this.staging;
     const view = new QuarterCamera(angle, viewHeight);
     const input = new DomInput(this.canvas);
     const collisions = new CollisionMap(bounds);
@@ -54,14 +55,22 @@ export class GameFactory {
     const pointerMove = new PointerMove(input, view, collisions);
     const controller = new PlayerController([new KeyboardMove(input, angle.azimuth), pointerMove], input);
 
-    const [groundTexture, hero, buildings] = await Promise.all([
+    const sprites = new SpriteFactory(this.look, angle);
+    const [groundTexture, hero, buildings, scenery] = await Promise.all([
       new TextureLoader().loadAsync(GROUND_TEXTURE),
-      this.staging.createHero(new SpriteFactory(this.look, angle), collisions, controller),
+      this.staging.createHero(sprites, collisions, controller),
       Promise.all(town.map((placement) => buildingFactory.create(placement))),
+      Promise.all(
+        props.map(async (placement) => {
+          const image = await sprites.still(placement.image, placement.height);
+          return new Prop(image, placement, this.look);
+        }),
+      ),
     ]);
 
     world.add(new Ground(groundTexture, bounds, this.look, renderer.capabilities.getMaxAnisotropy()));
     for (const building of buildings) world.add(building);
+    for (const prop of scenery) world.add(prop);
 
     world.add(new MoveMarker(pointerMove));
     world.add(hero);

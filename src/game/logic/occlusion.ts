@@ -41,6 +41,32 @@ export function isOccluded(
   return heights.some((y) => rayHitsBox({ x: feet.x, y, z: feet.z }, towardCamera, box));
 }
 
+/** 세워 놓은 그림에서 캐릭터를 가릴 수 있는 부분. 그림 크기에 견준 비율로 적는다. */
+export interface CoverPart {
+  /** 가리는 부분의 아래와 위(그림 높이에 견준 비율, 0이 땅). */
+  readonly bottom: number;
+  readonly top: number;
+  /** 가리는 부분의 너비(그림 너비에 견준 비율). */
+  readonly width: number;
+}
+
+/** 세워 놓은 그림의 두께. 가림 검사용 상자가 납작해지지 않을 만큼만 준다. */
+const BILLBOARD_THICKNESS = 0.1;
+
+/** 땅에 수직으로 세운 그림(나무 같은 소품)에서 캐릭터를 가리는 부분을 상자로 돌려준다. */
+export function billboardCover(
+  foot: { x: number; z: number },
+  width: number,
+  height: number,
+  part: CoverPart,
+): Box3D {
+  const halfW = (width * part.width) / 2;
+  return {
+    min: { x: foot.x - halfW, y: height * part.bottom, z: foot.z - BILLBOARD_THICKNESS / 2 },
+    max: { x: foot.x + halfW, y: height * part.top, z: foot.z + BILLBOARD_THICKNESS / 2 },
+  };
+}
+
 /** 불투명도를 목표값으로 부드럽게 옮긴다. 프레임 길이에 상관없이 같은 속도로 변한다. */
 export function approach(current: number, target: number, dt: number, rate = 9): number {
   const k = 1 - Math.exp(-rate * dt);

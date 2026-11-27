@@ -10,36 +10,49 @@ export const SHADOW_DIRECTION: Readonly<Vec2> = { x: 0.8, z: 0.6 };
 /** 건물 높이 1마다 그림자가 뻗는 길이. */
 export const SHADOW_REACH = 0.2;
 
-/** 땅에 선 상자 모양 물체의 자리와 높이. */
+/** 땅에 선 물체의 자리와 높이. 보통은 상자 모양이고, round이면 나무처럼 바닥이 둥근 물체다. */
 export interface ShadowCaster {
   readonly x: number;
   readonly z: number;
   readonly width: number;
   readonly depth: number;
   readonly height: number;
+  readonly round?: boolean;
+}
+
+/** 둥근 바닥을 다각형으로 어림할 때 쓰는 꼭짓점 수. */
+const ROUND_STEPS = 16;
+
+/** 물체가 땅에 닿은 자리의 테두리 점들. 상자는 네 모서리, 둥근 물체는 타원 위의 점들이다. */
+export function baseOutline(caster: ShadowCaster): Vec2[] {
+  const halfW = caster.width / 2;
+  const halfD = caster.depth / 2;
+  if (!caster.round) {
+    return [-1, 1].flatMap((sx) =>
+      [-1, 1].map((sz) => ({ x: caster.x + sx * halfW, z: caster.z + sz * halfD })),
+    );
+  }
+  return Array.from({ length: ROUND_STEPS }, (_, i) => {
+    const angle = (i / ROUND_STEPS) * Math.PI * 2;
+    return { x: caster.x + Math.cos(angle) * halfW, z: caster.z + Math.sin(angle) * halfD };
+  });
 }
 
 /**
- * 상자가 땅에 드리우는 그림자의 테두리를 한 방향으로 도는 꼭짓점들로 돌려준다.
- * 바닥 네모와, 그것을 빛 반대쪽으로 민 네모를 함께 감싸는 볼록한 도형이다.
+ * 물체가 땅에 드리우는 그림자의 테두리를 한 방향으로 도는 꼭짓점들로 돌려준다.
+ * 바닥 테두리와, 그것을 빛 반대쪽으로 민 테두리를 함께 감싸는 볼록한 도형이다.
  */
 export function castShadowOutline(
   caster: ShadowCaster,
   direction: Readonly<Vec2> = SHADOW_DIRECTION,
   reach = SHADOW_REACH,
 ): Vec2[] {
-  const halfW = caster.width / 2;
-  const halfD = caster.depth / 2;
   const dx = direction.x * caster.height * reach;
   const dz = direction.z * caster.height * reach;
-  const points: Vec2[] = [];
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const x = caster.x + sx * halfW;
-      const z = caster.z + sz * halfD;
-      points.push({ x, z }, { x: x + dx, z: z + dz });
-    }
-  }
+  const points = baseOutline(caster).flatMap(({ x, z }) => [
+    { x, z },
+    { x: x + dx, z: z + dz },
+  ]);
   return convexHull(points);
 }
 

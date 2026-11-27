@@ -60,6 +60,15 @@ export interface SpriteAnimator<Clip extends string> extends Updatable {
   setPosition(x: number, z: number): void;
 }
 
+/** 장면에 세운 움직이지 않는 그림. 소품은 이것이 어떻게 그려지는지 알 필요가 없다. */
+export interface StillImage {
+  readonly root: Object3D;
+  /** 세운 그림의 월드 너비와 높이. */
+  readonly width: number;
+  readonly height: number;
+  setOpacity(opacity: number): void;
+}
+
 /** 3D 물체를 올려놓을 수 있는 무대. three의 Scene이 여기에 맞는다. */
 export interface Stage {
   add(object: Object3D): unknown;

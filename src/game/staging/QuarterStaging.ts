@@ -13,6 +13,7 @@ import type { SpriteSource, Staging } from './Staging';
 export class QuarterStaging implements Staging {
   readonly angle = QUARTER_VIEW;
   readonly town = TOWN;
+  readonly props = [];
   readonly bounds = TOWN_BOUNDS;
   readonly viewHeight = 8.6;
   readonly heroHeight = LUCIEN.height;

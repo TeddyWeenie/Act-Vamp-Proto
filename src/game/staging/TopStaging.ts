@@ -1,6 +1,6 @@
 import { LUCIEN_BODY } from '../../data/characters';
 import { LUCIEN_CARDINAL } from '../../data/sprites';
-import { PLAYER_START, TOWN_TOP, TOWN_TOP_BOUNDS } from '../../data/town';
+import { PLAYER_START, TOWN_TOP, TOWN_TOP_BOUNDS, type PropPlacement } from '../../data/town';
 import type { CollisionSpace } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import { CardinalHero } from '../entities/CardinalHero';
@@ -21,8 +21,14 @@ export class TopStaging implements Staging {
   readonly viewHeight = 13.5;
   readonly heroHeight = LUCIEN_CARDINAL.height;
 
-  /** elevationDegrees: 카메라가 지면에서 올라간 각도. 클수록 지붕이 많이 보이고 벽이 적게 보인다. */
-  constructor(elevationDegrees?: number) {
+  /**
+   * elevationDegrees: 카메라가 지면에서 올라간 각도. 클수록 지붕이 많이 보이고 벽이 적게 보인다.
+   * props: 광장에 세울 소품. 주지 않으면 건물만 있는 광장이다.
+   */
+  constructor(
+    elevationDegrees?: number,
+    readonly props: readonly PropPlacement[] = [],
+  ) {
     this.angle = topView(elevationDegrees);
   }
 

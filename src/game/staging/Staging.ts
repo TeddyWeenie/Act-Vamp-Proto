@@ -1,5 +1,5 @@
 import type { SpriteSheet } from '../../data/sprites';
-import type { BuildingPlacement } from '../../data/town';
+import type { BuildingPlacement, PropPlacement } from '../../data/town';
 import type { CollisionSpace, SpriteAnimator } from '../capabilities';
 import type { CharacterController } from '../control/controller';
 import type { Character } from '../entities/Character';
@@ -18,6 +18,8 @@ export interface SpriteSource {
 export interface Staging {
   readonly angle: ViewAngle;
   readonly town: readonly BuildingPlacement[];
+  /** 나무나 울타리처럼 세워 놓는 소품. 없으면 빈 목록. */
+  readonly props: readonly PropPlacement[];
   readonly bounds: Bounds;
   /** 처음에 화면 세로에 들어오는 월드 길이. 클수록 멀리서 보고, 캐릭터가 작게 보인다. */
   readonly viewHeight: number;

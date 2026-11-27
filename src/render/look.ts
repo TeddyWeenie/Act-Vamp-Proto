@@ -17,6 +17,8 @@ export const ORDER = {
   sprite: 2,
   fadedDepth: 3,
   fadedColor: 4,
+  /** 공기 중의 빛 입자. 모든 것 위에 덧그린다. */
+  air: 5,
 } as const;
 
 /** 화면 느낌에 맞게 갈아입힌 건물의 겉모습. 건물은 불투명도만 알려 주면 된다. */
@@ -25,13 +27,17 @@ export interface BuildingSkin {
   setOpacity(opacity: number): void;
 }
 
-/** 건물의 벽이 땅에서 차지하는 자리(처마는 뺀다)와 건물 높이. 바닥 그림자를 만들 때 쓴다. */
+/** 물체가 땅에서 차지하는 자리(건물이면 처마를 뺀 벽)와 높이. 바닥 그림자를 만들 때 쓴다. */
 export interface GroundArea {
   readonly x: number;
   readonly z: number;
   readonly width: number;
   readonly depth: number;
   readonly height: number;
+  /** 나무처럼 바닥이 둥근 물체인지. */
+  readonly round?: boolean;
+  /** 건물이 아니라 소품이 드리우는 그림자인지. 소품이 자기 그림자에 스스로 어두워지지 않게 가려 쓴다. */
+  readonly fromProp?: boolean;
 }
 
 /**
@@ -41,6 +47,8 @@ export interface GroundArea {
  */
 export interface SpriteLook {
   spriteMaterial(map: Texture): MeshBasicMaterial;
+  /** 나무나 울타리처럼 세워 놓는 소품 그림의 재질. */
+  propMaterial(map: Texture): MeshBasicMaterial;
   /** 캐릭터 발밑 그림자. 발 위치를 원점으로 놓은 물체를 돌려준다. */
   footShadow(characterHeight: number): Object3D;
 }
@@ -86,6 +94,10 @@ export abstract class BaseLook implements SceneLook {
 
   spriteMaterial(map: Texture): MeshBasicMaterial {
     return new MeshBasicMaterial({ map, transparent: true, alphaTest: 0.02, side: DoubleSide });
+  }
+
+  propMaterial(map: Texture): MeshBasicMaterial {
+    return this.spriteMaterial(map);
   }
 
   depthOnlyMaterial(): Material {

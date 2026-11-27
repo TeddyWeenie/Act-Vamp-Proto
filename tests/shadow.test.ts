@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { SHADOW_DIRECTION, SHADOW_REACH, castShadowOutline, convexHull } from '../src/game/logic/shadow';
+import {
+  SHADOW_DIRECTION,
+  SHADOW_REACH,
+  baseOutline,
+  castShadowOutline,
+  convexHull,
+} from '../src/game/logic/shadow';
 
 const area = (points: readonly { x: number; z: number }[]): number => {
   let sum = 0;
@@ -53,5 +59,23 @@ describe('castShadowOutline', () => {
     const outline = castShadowOutline({ ...house, height: 0 });
     expect(outline).toHaveLength(4);
     expect(area(outline)).toBeCloseTo(8);
+  });
+});
+
+describe('둥근 물체의 그림자', () => {
+  const tree = { x: 0, z: 0, width: 4, depth: 2, height: 5, round: true };
+
+  it('바닥 테두리가 타원 위에 놓인다', () => {
+    for (const point of baseOutline(tree)) {
+      expect((point.x / 2) ** 2 + (point.z / 1) ** 2).toBeCloseTo(1);
+    }
+  });
+
+  it('같은 크기의 상자보다 작고, 빛 반대쪽으로 뻗는다', () => {
+    const round = castShadowOutline(tree);
+    const box = castShadowOutline({ ...tree, round: false });
+    expect(area(round)).toBeLessThan(area(box));
+    expect(Math.max(...round.map((p) => p.x))).toBeCloseTo(2 + SHADOW_DIRECTION.x * 5 * SHADOW_REACH);
+    expect(Math.min(...round.map((p) => p.x))).toBeCloseTo(-2);
   });
 });
