@@ -8,6 +8,11 @@ export interface ActionInput {
   takeAttack(): boolean;
 }
 
+/** 한 번 읽으면 비워지는 "말 걸기·살펴보기" 입력. */
+export interface InteractInput {
+  takeInteract(): boolean;
+}
+
 export interface PointerClick {
   readonly ndcX: number;
   readonly ndcY: number;
@@ -27,10 +32,11 @@ export interface ZoomInput {
  * 브라우저의 키보드와 포인터 이벤트를 모아 게임이 읽기 쉬운 값으로 바꾼다.
  * 쓰는 쪽은 위의 작은 인터페이스 가운데 필요한 것만 받는다.
  */
-export class DomInput implements AxisInput, ActionInput, PointerInput, ZoomInput {
+export class DomInput implements AxisInput, ActionInput, InteractInput, PointerInput, ZoomInput {
   private readonly keys = new Set<string>();
   private readonly axisValue = { x: 0, y: 0 };
   private attackQueued = false;
+  private interactQueued = false;
   private pointerTarget: PointerClick | null = null;
   private wheel = 0;
 
@@ -56,6 +62,12 @@ export class DomInput implements AxisInput, ActionInput, PointerInput, ZoomInput
   takeAttack(): boolean {
     const queued = this.attackQueued;
     this.attackQueued = false;
+    return queued;
+  }
+
+  takeInteract(): boolean {
+    const queued = this.interactQueued;
+    this.interactQueued = false;
     return queued;
   }
 
@@ -85,6 +97,7 @@ export class DomInput implements AxisInput, ActionInput, PointerInput, ZoomInput
       event.preventDefault();
       return;
     }
+    if ((event.code === 'KeyE' || event.code === 'Enter') && !event.repeat) this.interactQueued = true;
     if (event.code.startsWith('Arrow')) event.preventDefault();
     this.keys.add(event.code);
   };

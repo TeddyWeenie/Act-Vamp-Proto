@@ -17,6 +17,11 @@ export class World implements Updatable {
     private readonly occlusion: OcclusionSystem,
   ) {}
 
+  /** 장면에 있는 것들. 검증 도구가 들여다볼 때 쓴다. */
+  get members(): readonly Entity[] {
+    return this.entities;
+  }
+
   add<T extends Entity>(entity: T): T {
     this.entities.push(entity);
     this.stage.add(entity.root);

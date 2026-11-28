@@ -45,6 +45,13 @@ export function pushOutOfFootprint(pos: Vec2, radius: number, box: Footprint): V
   return { x: pos.x, z: box.maxZ + radius };
 }
 
+/** 원(캐릭터 발밑)이 사각형과 겹치는지. */
+export function overlapsFootprint(pos: Readonly<Vec2>, radius: number, box: Footprint): boolean {
+  const dx = pos.x - Math.max(box.minX, Math.min(pos.x, box.maxX));
+  const dz = pos.z - Math.max(box.minZ, Math.min(pos.z, box.maxZ));
+  return dx * dx + dz * dz < radius * radius;
+}
+
 /** 한 걸음 이동하고 건물과 맵 경계를 반영한 위치를 돌려준다. */
 export function step(
   pos: Vec2,

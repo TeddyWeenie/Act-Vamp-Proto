@@ -8,6 +8,11 @@ import type { Updatable } from '../capabilities';
 export abstract class Entity implements Updatable {
   protected constructor(readonly root: Object3D) {}
 
+  /** 장면에서 보이게 하거나 감춘다. 감춰도 자리는 그대로다. */
+  setVisible(visible: boolean): void {
+    this.root.visible = visible;
+  }
+
   /** 시간이 흐를 때 할 일. 가만히 있는 것은 그대로 둔다. */
   update(_dt: number): void {}
 }
