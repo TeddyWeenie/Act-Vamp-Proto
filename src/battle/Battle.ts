@@ -67,6 +67,11 @@ export class Battle {
     return true;
   }
 
+  /** 행동 게이지가 얼마나 찼는지(0~1). 1이면 행동할 차례다. */
+  readiness(who: Combatant): number {
+    return Math.min(1, Math.max(0, who.ap / GAUGE_FULL));
+  }
+
   /**
    * 앞으로 행동할 순서를 count번째까지 내다본다. 명령을 기다리는 아군이 있으면 맨 앞이다.
    * 지금의 게이지와 민첩만으로 셈한 예상이라, 배리어가 깨지거나 게이지가 밀리면 달라진다.

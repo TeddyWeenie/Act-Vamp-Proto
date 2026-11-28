@@ -8,14 +8,11 @@ import type { BattleOrders, BattleScreen, FloatKind, Standing } from '../game/st
 import { ArcMenu, type ArcEntry, type Band } from './battle/ArcMenu';
 import { CommandPicker } from './battle/CommandPicker';
 import { AllyPlate, FoePlate, type Spot, type StatusPlate } from './battle/StatusPlate';
-import { TurnOrder } from './battle/TurnOrder';
+import { TurnTimeline } from './battle/TurnTimeline';
 import { digitIndex, el } from './dom';
 
-/** 행동 순서 띠에 보여 줄 사람 수(지금 차례 포함). */
-const ORDER_LENGTH = 5;
-
-/** 명령 메뉴가 벗어나지 않는 화면 세로 범위(위에서부터의 비율). 위는 행동 순서 띠, 아래는 검은 띠를 피한다. */
-const MENU_TOP = 0.13;
+/** 명령 메뉴가 벗어나지 않는 화면 세로 범위(위에서부터의 비율). 위는 시간 막대, 아래는 검은 띠를 피한다. */
+const MENU_TOP = 0.17;
 const MENU_BOTTOM = 0.94;
 
 /** 동료가 이만큼(몸의 키에 대한 비율)보다 더 뒤에 서 있으면 메뉴에 가려질 일이 없다고 본다. */
@@ -62,14 +59,14 @@ const PRESSES: Readonly<Record<string, Press>> = {
  *  - 정보창: 평소에는 발밑의 막대 두 줄, 차례가 오거나 겨눠지거나 마우스를 올리거나 Shift를 누르면 이름표로 펼쳐진다.
  *  - 명령 메뉴: 차례가 온 캐릭터 앞에 부채꼴로 펼쳐진다. ↑↓와 Enter, 또는 숫자 1~5로 고른다.
  *  - 대상 확인: 적 하나를 향하는 명령은 적 둘레에 표적이 뜨고, ↑↓로 바꾼 뒤 Enter로 정한다. Esc로 돌아간다.
- *  - 행동 순서 띠: 위쪽에 지금과 다음 차례가 한 줄로 보인다.
+ *  - 시간 막대: 위쪽에 모두의 행동 게이지가 한 줄의 시간 위를 달린다. 시간이 흐르는지 멈췄는지도 보여 준다.
  * 이 클래스는 부품들을 놓고 잇기만 한다. 고르는 흐름은 CommandPicker가, 그리기는 각 부품이 맡는다.
  * 수치는 넘겨받은 Battle에서 읽기만 하고, 플레이어가 고른 것은 BattleOrders로 전한다.
  */
 export class BattleView implements BattleScreen {
   private readonly layer = el('div', 'battle layer');
   private readonly message = el('p', 'battle-message panel');
-  private readonly order = new TurnOrder();
+  private readonly timeline = new TurnTimeline();
   private readonly plateLayer = el('div', 'battle-plates');
   private readonly floats = el('div', 'battle-floats');
   private readonly activeMark = new Marker('battle-mark', '▼');
@@ -91,7 +88,7 @@ export class BattleView implements BattleScreen {
     );
     this.layer.append(
       this.message,
-      this.order.root,
+      this.timeline.root,
       this.plateLayer,
       this.activeMark.root,
       this.arc.root,
@@ -116,6 +113,7 @@ export class BattleView implements BattleScreen {
     this.plates.clear();
     for (const plate of [...this.allies, ...this.foes]) this.plates.set(plate.who.id, plate);
     this.plateLayer.replaceChildren(...[...this.allies, ...this.foes].map((plate) => plate.root));
+    this.timeline.open([...battle.party, ...battle.enemies], this.party);
     this.floats.replaceChildren();
     this.showAll = false;
     this.offer(null);
@@ -160,7 +158,7 @@ export class BattleView implements BattleScreen {
     const { battle, picker } = this;
     if (!battle || !picker) return;
     const aiming = picker.pending !== null;
-    this.order.show(battle.upcoming(ORDER_LENGTH), this.party, battle.active !== null);
+    this.timeline.update(battle);
     for (const plate of this.allies) {
       plate.spotlight(plate.who === picker.member);
       plate.refresh(this.showAll);

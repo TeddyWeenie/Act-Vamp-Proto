@@ -151,6 +151,17 @@ describe('행동 순서 내다보기', () => {
     }
   });
 
+  it('시간 막대는 행동 게이지가 찬 비율을 0~1로 읽는다', () => {
+    const { battle, member } = stage();
+    expect(battle.readiness(member)).toBe(1);
+    for (const who of [...battle.party, ...battle.enemies]) {
+      expect(battle.readiness(who)).toBeGreaterThanOrEqual(0);
+      expect(battle.readiness(who)).toBeLessThanOrEqual(1);
+    }
+    battle.act('guard');
+    expect(battle.readiness(member)).toBe(0);
+  });
+
   it('쓰러진 사람은 순서에서 빠진다', () => {
     const { battle } = stage();
     const fallen = battle.enemies[0]!;
