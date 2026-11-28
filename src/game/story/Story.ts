@@ -42,6 +42,8 @@ export interface StoryKit {
   readonly input: InteractInput;
   readonly look: SpriteLook & Pick<BuildingLook, 'groundShadow' | 'fadeRate'>;
   readonly angle: ViewAngle;
+  /** 보통 때 화면 세로에 들어오는 월드 길이. */
+  readonly viewHeight: number;
 }
 
 /** 이야기 한 편을 무대에 올리는 것. 다른 장(章)은 이 약속을 지키는 클래스를 더해 만든다. */

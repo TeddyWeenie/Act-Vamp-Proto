@@ -80,7 +80,10 @@ export class Chapter1Story implements Story, ExploreListener {
 
     const escort = new Escort(new Trail(hero), companions);
     this.escort = escort;
-    const arena = new FieldArena(kit.focus, kit.lens, world.add(new BattleGround()));
+    const arena = new FieldArena(kit.focus, kit.lens, world.add(new BattleGround()), {
+      elevation: angle.elevation,
+      viewHeight: kit.viewHeight,
+    });
 
     // 전투 수치의 순서(리시엔, 볼프, 에다)에 맞춰 몸을 짝짓는다.
     const allies = this.campaign.party.map((member): Performer =>

@@ -101,6 +101,7 @@ export class GameFactory {
       input,
       look: this.look,
       angle,
+      viewHeight,
     });
     // 이야기가 조종자를 먼저 정하고, 그다음 월드가 그 조종대로 움직인다.
     const frame = tale ? new Sequence([tale, world]) : world;

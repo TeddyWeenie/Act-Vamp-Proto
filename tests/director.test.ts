@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { FieldArena } from '../src/game/battle/Arena';
 import { Escort } from '../src/game/control/Escort';
+import type { BattleGround } from '../src/game/entities/BattleGround';
+import { DEFAULT_FORMATION, layoutFormation } from '../src/game/logic/formation';
 import { ScriptedController } from '../src/game/control/ScriptedController';
 import { SwitchController } from '../src/game/control/SwitchController';
 import { Trail } from '../src/game/control/TrailFollow';
@@ -229,5 +232,49 @@ describe('빈자리 확인과 카메라 초점', () => {
     expect(focus.position).toEqual({ x: 5, z: 5 });
     focus.release();
     expect(focus.position).toEqual({ x: 9, z: 9 });
+  });
+});
+
+describe('싸움터 화면 잡기', () => {
+  const view = { elevation: (50 * Math.PI) / 180, viewHeight: 13.5 };
+
+  function open(axis: 'sides' | 'ranks') {
+    const focus = new CameraFocus({ position: { x: 0, z: 0 } });
+    const zooms: number[] = [];
+    const shown: { centre: Vec2; width: number; depth: number }[] = [];
+    const ground = {
+      appear: (centre: Vec2, width: number, depth: number) => shown.push({ centre, width, depth }),
+      vanish: () => {},
+    };
+    const arena = new FieldArena(
+      focus,
+      { closeUp: (ratio) => zooms.push(ratio) },
+      ground as unknown as BattleGround,
+      view,
+    );
+    arena.open(layoutFormation({ x: 5, z: -2 }, 3, 2, { ...DEFAULT_FORMATION, axis }));
+    return { focus, zooms, shown, arena };
+  }
+
+  it('가로 대형은 화면을 당기고, 명령 메뉴에 가리지 않게 남쪽을 본다', () => {
+    const { focus, zooms, shown } = open('sides');
+    expect(zooms).toEqual([0.86]);
+    expect(focus.position.x).toBe(5);
+    expect(focus.position.z).toBeGreaterThan(-2 + 1);
+    expect(shown[0]!.width).toBeGreaterThan(shown[0]!.depth);
+  });
+
+  it('세로 대형은 깊어서 화면을 밀어 모두 담는다', () => {
+    const { focus, zooms } = open('ranks');
+    expect(zooms[0]).toBeGreaterThan(1);
+    expect(zooms[0]).toBeLessThanOrEqual(1.2);
+    expect(focus.position.z).toBeGreaterThan(-2 + 2);
+  });
+
+  it('닫으면 화면과 초점을 되돌린다', () => {
+    const { focus, zooms, arena } = open('sides');
+    arena.close();
+    expect(zooms.at(-1)).toBe(1);
+    expect(focus.position).toEqual({ x: 0, z: 0 });
   });
 });
