@@ -78,6 +78,9 @@ export abstract class Combatant {
   /** 배리어의 한도. 아군은 장비에 따라 달라진다. */
   abstract get maxBp(): number;
 
+  /** 행동 게이지가 차는 빠르기(민첩). */
+  abstract get speed(): number;
+
   /** 피해를 받는다. 방어 중이면 절반으로 줄고 방어가 풀린다. */
   takeDamage(raw: number, kind: DamageKind = 'normal'): DamageResult {
     let amount = Math.max(1, Math.round(raw));

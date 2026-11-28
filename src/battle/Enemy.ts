@@ -33,4 +33,8 @@ export class Enemy extends Combatant {
   get maxBp(): number {
     return this.barrier;
   }
+
+  get speed(): number {
+    return this.spd;
+  }
 }

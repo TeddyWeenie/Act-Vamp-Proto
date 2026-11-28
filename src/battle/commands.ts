@@ -7,6 +7,9 @@ import type { BattleEvent } from './events';
 /** 숫자 1~5에 놓이는 명령의 자리. */
 export type CommandId = 'attack' | 'skill' | 'support' | 'guard' | 'potion';
 
+/** 명령이 누구를 향하는지. enemy는 고른 적 하나, enemies는 적 전체, none은 아군이나 자신이라 고를 대상이 없다. */
+export type CommandAim = 'enemy' | 'enemies' | 'none';
+
 /** 명령이 실행될 때 볼 수 있는 전투의 모습. */
 export interface CommandContext {
   readonly actor: PartyMember;
@@ -29,6 +32,11 @@ export abstract class Command {
     readonly cost: number,
     readonly tip: string,
   ) {}
+
+  /** 이 명령이 누구를 향하는지. 화면이 대상을 고르게 할지 정하는 데 쓴다. */
+  get aim(): CommandAim {
+    return 'none';
+  }
 
   /** 지금 쓸 수 없으면 그 이유를 돌려준다. 마력 부족은 전투가 따로 살핀다. */
   blockedReason(_context: Pick<CommandContext, 'supplies'>): string | null {
@@ -62,6 +70,10 @@ export class BasicAttack extends Command {
     super('attack', '기본 공격', 0, `배리어부터 피해 · MP ${mpGain} 회복`);
   }
 
+  override get aim(): CommandAim {
+    return 'enemy';
+  }
+
   perform(context: CommandContext): void {
     const { actor, target } = context;
     this.hit(context, target, actor.attackPower - target.def);
@@ -79,6 +91,10 @@ export class PiercingDrain extends Command {
     private readonly drainRatio = 0.4,
   ) {
     super('skill', name, cost, tip);
+  }
+
+  override get aim(): CommandAim {
+    return 'enemy';
   }
 
   perform(context: CommandContext): void {
@@ -99,6 +115,10 @@ export class BarrierBreak extends Command {
     super('skill', name, cost, tip);
   }
 
+  override get aim(): CommandAim {
+    return 'enemy';
+  }
+
   perform(context: CommandContext): void {
     this.hit(context, context.target, context.actor.attackPower + this.bonus, 'breaker');
   }
@@ -115,6 +135,10 @@ export class Overload extends Command {
     private readonly gaugeDelay = 15,
   ) {
     super('skill', name, cost, tip);
+  }
+
+  override get aim(): CommandAim {
+    return 'enemies';
   }
 
   perform(context: CommandContext): void {

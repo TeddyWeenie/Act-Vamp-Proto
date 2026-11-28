@@ -1,150 +1,34 @@
 import type { Battle } from '../battle/Battle';
 import type { Combatant } from '../battle/Combatant';
-import type { Enemy } from '../battle/Enemy';
 import type { PartyMember } from '../battle/PartyMember';
 import type { Supplies } from '../battle/Supplies';
 import type { Command } from '../battle/commands';
 import type { ScreenPoint } from '../game/capabilities';
 import type { BattleOrders, BattleScreen, FloatKind, Standing } from '../game/story/screens';
+import { ArcMenu, type ArcEntry, type Band } from './battle/ArcMenu';
+import { CommandPicker } from './battle/CommandPicker';
+import { AllyPlate, FoePlate, type Spot, type StatusPlate } from './battle/StatusPlate';
+import { TurnOrder } from './battle/TurnOrder';
 import { digitIndex, el } from './dom';
 
-/** 행동 게이지가 다 찼을 때의 값. */
-const GAUGE_FULL = 100;
+/** 행동 순서 띠에 보여 줄 사람 수(지금 차례 포함). */
+const ORDER_LENGTH = 5;
 
-/** 이름이 붙은 막대 하나(HP, BP, MP, 행동 게이지). 값이 바뀔 때만 화면을 고친다. */
-class Gauge {
-  readonly root: HTMLElement;
-  private readonly fill = el('i');
-  private readonly value = el('b');
-  private shown = '';
+/** 명령 메뉴가 벗어나지 않는 화면 세로 범위(위에서부터의 비율). 위는 행동 순서 띠, 아래는 검은 띠를 피한다. */
+const MENU_TOP = 0.13;
+const MENU_BOTTOM = 0.94;
 
-  constructor(kind: string, label: string) {
-    this.root = el('div', `gauge gauge-${kind}`);
-    const track = el('span', 'gauge-track');
-    track.append(this.fill);
-    this.root.append(el('em', '', label), track, this.value);
-  }
+/** 동료가 이만큼(몸의 키에 대한 비율)보다 더 뒤에 서 있으면 메뉴에 가려질 일이 없다고 본다. */
+const BEHIND = 0.2;
+/** 발밑 막대가 차지하는 높이(몸의 키에 대한 비율). */
+const UNDERFOOT = 0.18;
 
-  set(current: number, max: number, showNumber = true): void {
-    const whole = Math.max(0, Math.round(current));
-    const key = `${whole}/${max}`;
-    if (key === this.shown) return;
-    this.shown = key;
-    this.fill.style.width = `${max > 0 ? Math.min(100, (Math.max(0, current) / max) * 100) : 0}%`;
-    this.value.textContent = showNumber ? String(whole) : '';
-  }
-}
-
-/** 화면 위의 한 점(픽셀). */
-interface Spot {
-  readonly x: number;
-  readonly y: number;
-}
-
-/** 이름표를 몸 가운데에서 옆으로 얼마나 띄울지. 몸이 화면에서 차지하는 키에 대한 비율이다. */
-const BESIDE = 0.4;
-
-/**
- * 전투원 한 명의 이름표와 막대들. 캐릭터 바로 옆을 따라다닌다.
- * 어느 쪽 옆에 붙을지와 어떤 막대를 보여 줄지만 아군과 적이 다르다.
- */
-abstract class Plate<T extends Combatant> {
-  readonly root: HTMLElement;
-  protected readonly hp = new Gauge('hp', 'HP');
-  protected readonly bp = new Gauge('bp', 'BP');
-  protected readonly ap = new Gauge('ap', '행동');
-  private headSpot: Spot = { x: 0, y: 0 };
-  private bodySpot: Spot = { x: 0, y: 0 };
-
-  protected constructor(
-    readonly who: T,
-    tag: 'div' | 'button',
-    className: string,
-  ) {
-    this.root = el(tag, `plate ${className}`);
-  }
-
-  /** 이름표가 몸의 어느 쪽에 붙는지. 싸움터 바깥쪽이라 가운데의 명령 메뉴와 겹치지 않는다. */
-  protected abstract readonly side: -1 | 1;
-
-  /** 머리 위. 표시를 띄울 자리다. */
-  get head(): Spot {
-    return this.headSpot;
-  }
-
-  /** 몸 가운데. 명령 메뉴의 높이를 맞출 자리다. */
-  get body(): Spot {
-    return this.bodySpot;
-  }
-
-  /** 캐릭터가 선 자리에 맞춰 이름표를 옮긴다. width와 height는 화면의 크기(픽셀). */
-  follow(standing: Standing, width: number, height: number): void {
-    const { feet, head } = standing;
-    const tall = (feet.y - head.y) * height;
-    this.headSpot = { x: head.x * width, y: head.y * height };
-    this.bodySpot = { x: feet.x * width, y: ((feet.y + head.y) / 2) * height };
-    this.root.style.setProperty('--x', `${Math.round(this.bodySpot.x + this.side * tall * BESIDE)}px`);
-    this.root.style.setProperty('--y', `${Math.round(this.bodySpot.y)}px`);
-  }
-
-  refresh(): void {
-    const { who } = this;
-    this.hp.set(who.hp, who.maxHp);
-    this.bp.set(who.bp, who.maxBp);
-    this.ap.set(Math.min(who.ap, GAUGE_FULL), GAUGE_FULL, false);
-    this.root.classList.toggle('down', !who.alive);
-  }
-
-  highlight(on: boolean): void {
-    this.root.classList.toggle('on', on);
-  }
-}
-
-/** 아군의 이름표: 몸 왼쪽에 붙고 MP까지 보여 준다. 쓰러져도 남아 있다. */
-class AllyPlate extends Plate<PartyMember> {
-  protected readonly side = -1;
-  private readonly mp = new Gauge('mp', 'MP');
-
-  constructor(member: PartyMember) {
-    super(member, 'div', 'plate-ally');
-    this.root.append(
-      el('p', 'plate-name', member.name),
-      this.hp.root,
-      this.bp.root,
-      this.mp.root,
-      this.ap.root,
-    );
-  }
-
-  override refresh(): void {
-    super.refresh();
-    this.mp.set(this.who.mp, this.who.maxMp);
-  }
-}
-
-/** 적의 이름표: 몸 오른쪽에 붙고, 누르면 그 적을 겨눈다. 쓰러지면 몸과 함께 사라진다. */
-class FoePlate extends Plate<Enemy> {
-  protected readonly side = 1;
-
-  constructor(enemy: Enemy, onPick: (enemy: Enemy) => void) {
-    super(enemy, 'button', 'plate-foe');
-    (this.root as HTMLButtonElement).type = 'button';
-    this.root.append(el('p', 'plate-name', enemy.name), this.hp.root, this.bp.root, this.ap.root);
-    this.root.addEventListener('click', () => onPick(enemy));
-  }
-
-  override refresh(): void {
-    super.refresh();
-    this.root.hidden = !this.who.alive;
-  }
-}
-
-/** 머리 위에 띄우는 작은 화살표(차례가 온 아군, 겨눈 적). */
-class Mark {
+/** 화면 위의 한 점에 띄우는 작은 표시(차례가 온 아군 머리 위의 화살표, 겨누는 동안의 조작 안내). */
+class Marker {
   readonly root: HTMLElement;
 
-  constructor(kind: 'active' | 'target') {
-    this.root = el('div', `battle-mark battle-mark-${kind}`, '▼');
+  constructor(className: string, text: string) {
+    this.root = el('div', className, text);
     this.root.hidden = true;
   }
 
@@ -157,57 +41,83 @@ class Mark {
   }
 }
 
-/** 명령 메뉴의 가운데가 화면 세로에서 벗어나지 않는 범위(위에서부터의 비율). 위아래 띠와 메뉴 높이의 절반만큼 띄운다. */
-const MENU_TOP = 0.28;
-const MENU_BOTTOM = 0.72;
+/** 키보드의 키가 명령 고르기에서 뜻하는 것. */
+type Press = 'up' | 'down' | 'confirm' | 'cancel';
+
+const PRESSES: Readonly<Record<string, Press>> = {
+  ArrowUp: 'up',
+  ArrowLeft: 'up',
+  ArrowDown: 'down',
+  ArrowRight: 'down',
+  Tab: 'down',
+  Enter: 'confirm',
+  NumpadEnter: 'confirm',
+  Space: 'confirm',
+  Escape: 'cancel',
+  Backspace: 'cancel',
+};
 
 /**
- * 전투 화면: 캐릭터마다 바로 옆에 붙는 작은 이름표, 싸움터 한가운데에 뜨는 명령 메뉴, 머리 위에 떠오르는 숫자.
- * 눈이 캐릭터에서 떠나지 않아도 누가 얼마나 버티는지, 지금 누구 차례인지 알 수 있게 하려는 배치다.
+ * 전투 화면. 눈이 캐릭터에서 떠나지 않아도 싸움을 읽을 수 있게, 모든 정보를 캐릭터 곁에 둔다.
+ *  - 정보창: 평소에는 발밑의 막대 두 줄, 차례가 오거나 겨눠지거나 마우스를 올리거나 Shift를 누르면 이름표로 펼쳐진다.
+ *  - 명령 메뉴: 차례가 온 캐릭터 앞에 부채꼴로 펼쳐진다. ↑↓와 Enter, 또는 숫자 1~5로 고른다.
+ *  - 대상 확인: 적 하나를 향하는 명령은 적 둘레에 표적이 뜨고, ↑↓로 바꾼 뒤 Enter로 정한다. Esc로 돌아간다.
+ *  - 행동 순서 띠: 위쪽에 지금과 다음 차례가 한 줄로 보인다.
+ * 이 클래스는 부품들을 놓고 잇기만 한다. 고르는 흐름은 CommandPicker가, 그리기는 각 부품이 맡는다.
  * 수치는 넘겨받은 Battle에서 읽기만 하고, 플레이어가 고른 것은 BattleOrders로 전한다.
- * 숫자 1~5로 명령을 고르고, Tab이나 좌우 화살표 또는 적 이름표 클릭으로 겨눌 적을 바꾼다.
  */
 export class BattleView implements BattleScreen {
   private readonly layer = el('div', 'battle layer');
   private readonly message = el('p', 'battle-message panel');
+  private readonly order = new TurnOrder();
   private readonly plateLayer = el('div', 'battle-plates');
-  private readonly menu = el('div', 'battle-menu panel');
   private readonly floats = el('div', 'battle-floats');
-  private readonly activeMark = new Mark('active');
-  private readonly targetMark = new Mark('target');
+  private readonly activeMark = new Marker('battle-mark', '▼');
+  private readonly aimHint = new Marker('battle-aim-hint', '↑ ↓ 대상 바꾸기 · Enter 결정 · Esc 뒤로');
+  private readonly arc: ArcMenu;
   private allies: AllyPlate[] = [];
   private foes: FoePlate[] = [];
-  private readonly plates = new Map<string, Plate<Combatant>>();
+  private readonly plates = new Map<string, StatusPlate<Combatant>>();
+  private party: ReadonlySet<Combatant> = new Set();
   private battle: Battle | null = null;
   private supplies: Supplies | null = null;
-  private orders: BattleOrders | null = null;
-  private offered: PartyMember | null = null;
+  private picker: CommandPicker | null = null;
+  private showAll = false;
 
   constructor(parent: HTMLElement) {
+    this.arc = new ArcMenu(
+      (index) => this.picker?.point(index),
+      (index) => this.picker?.choose(index),
+    );
     this.layer.append(
       this.message,
+      this.order.root,
       this.plateLayer,
-      this.targetMark.root,
       this.activeMark.root,
-      this.menu,
+      this.arc.root,
+      this.aimHint.root,
       this.floats,
     );
     this.layer.hidden = true;
-    this.menu.hidden = true;
     parent.append(this.layer);
-    window.addEventListener('keydown', this.onKey);
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', () => (this.showAll = false));
   }
 
   open(battle: Battle, supplies: Supplies, orders: BattleOrders): void {
     this.battle = battle;
     this.supplies = supplies;
-    this.orders = orders;
+    const picker = new CommandPicker(battle, supplies, orders);
+    this.picker = picker;
+    this.party = new Set(battle.party);
     this.allies = battle.party.map((member) => new AllyPlate(member));
-    this.foes = battle.enemies.map((enemy) => new FoePlate(enemy, (picked) => orders.aim(picked)));
+    this.foes = battle.enemies.map((enemy) => new FoePlate(enemy, (picked) => picker.aimAt(picked)));
     this.plates.clear();
     for (const plate of [...this.allies, ...this.foes]) this.plates.set(plate.who.id, plate);
     this.plateLayer.replaceChildren(...[...this.allies, ...this.foes].map((plate) => plate.root));
     this.floats.replaceChildren();
+    this.showAll = false;
     this.offer(null);
     this.refresh();
     this.layer.hidden = false;
@@ -215,15 +125,15 @@ export class BattleView implements BattleScreen {
   }
 
   offer(member: PartyMember | null): void {
-    this.offered = member;
-    this.menu.hidden = !member;
-    if (!member) return;
-    const title = el('p', 'battle-menu-title', `${member.name}의 차례`);
-    title.append(el('small', '', 'Tab 대상 바꾸기'));
-    this.menu.replaceChildren(
-      title,
-      ...member.commands.map((command, i) => this.commandButton(command, i, member)),
-    );
+    const picker = this.picker;
+    if (!picker) return;
+    picker.offer(member);
+    if (!member) {
+      this.arc.close();
+      return;
+    }
+    this.arc.open(member.commands.map((command) => this.entry(command, picker)));
+    this.arc.highlight(picker.index, false);
   }
 
   say(text: string): void {
@@ -242,98 +152,101 @@ export class BattleView implements BattleScreen {
     const width = this.layer.clientWidth;
     const height = this.layer.clientHeight;
     for (const standing of standings) this.plates.get(standing.who.id)?.follow(standing, width, height);
-    this.placeMenu(height);
+    const acting = this.actingPlate;
+    if (acting) this.arc.place(acting.body, acting.tall, this.arcRoom(acting, height));
   }
 
   refresh(): void {
-    const battle = this.battle;
-    if (!battle) return;
-    // 표시는 플레이어가 고르는 동안에만 띄운다. 적의 차례에는 눈을 끌 것이 없어야 한다.
-    const choosing = this.offered !== null;
-    let acting: Plate<Combatant> | null = null;
-    let aimed: Plate<Combatant> | null = null;
+    const { battle, picker } = this;
+    if (!battle || !picker) return;
+    const aiming = picker.pending !== null;
+    this.order.show(battle.upcoming(ORDER_LENGTH), this.party, battle.active !== null);
     for (const plate of this.allies) {
-      plate.refresh();
-      const on = choosing && plate.who === this.offered;
-      plate.highlight(on);
-      if (on) acting = plate;
+      plate.spotlight(plate.who === picker.member);
+      plate.refresh(this.showAll);
     }
+    let aimed: FoePlate | null = null;
     for (const plate of this.foes) {
-      plate.refresh();
-      const on = choosing && plate.who === battle.target;
-      plate.highlight(on);
+      const on = aiming && plate.who === battle.target;
+      plate.aim(on ? 'aimed' : aiming ? 'candidate' : 'none');
+      plate.refresh(this.showAll);
       if (on) aimed = plate;
     }
-    this.activeMark.point(acting?.head ?? null);
-    this.targetMark.point(aimed?.head ?? null);
+    this.arc.highlight(picker.index, aiming);
+    // 표시는 플레이어가 고르는 동안에만 띄운다. 적의 차례에는 눈을 끌 것이 없어야 한다.
+    this.activeMark.point(this.actingPlate?.head ?? null);
+    this.aimHint.point(aimed?.head ?? null);
   }
 
   close(): void {
     this.battle = null;
-    this.orders = null;
     this.supplies = null;
-    this.offered = null;
+    this.picker = null;
+    this.arc.close();
     this.layer.hidden = true;
     document.body.classList.remove('in-battle');
   }
 
-  /**
-   * 명령 메뉴를 아군과 적 사이의 빈 가운데에, 차례가 온 캐릭터의 높이에 맞춰 놓는다.
-   * 화면 위아래로 벗어나지 않게 높이를 누르고, 그만큼 어긋난 것은 메뉴 옆의 화살촉이 캐릭터를 가리켜 메운다.
-   */
-  private placeMenu(height: number): void {
-    const acting = this.offered ? this.plates.get(this.offered.id) : undefined;
-    if (!acting) return;
-    const front = Math.max(...this.allies.map((plate) => plate.body.x));
-    const standing = this.foes.filter((plate) => plate.who.alive);
-    const facing = Math.min(...(standing.length > 0 ? standing : this.foes).map((plate) => plate.body.x));
-    const y = Math.max(height * MENU_TOP, Math.min(height * MENU_BOTTOM, acting.body.y));
-    this.menu.style.left = `${Math.round((front + facing) / 2)}px`;
-    this.menu.style.top = `${Math.round(y)}px`;
-    this.menu.style.setProperty('--notch', `${Math.round(acting.body.y - y)}px`);
+  /** 명령을 고르고 있는 아군의 정보창. 고를 차례가 아니면 없다. */
+  private get actingPlate(): StatusPlate<Combatant> | undefined {
+    const member = this.picker?.member;
+    return member ? this.plates.get(member.id) : undefined;
   }
 
-  private commandButton(command: Command, index: number, member: PartyMember): HTMLButtonElement {
-    const button = el('button', 'battle-command');
-    button.type = 'button';
+  /**
+   * 부채꼴 메뉴가 펼쳐질 수 있는 세로 범위. 화면 위아래의 띠를 피하고,
+   * 메뉴가 펼쳐지는 쪽(앞)에 선 동료가 있으면 그 동료의 몸과 발밑 막대를 가리지 않게 그 위나 아래로 좁힌다.
+   */
+  private arcRoom(acting: StatusPlate<Combatant>, height: number): Band {
+    let top = height * MENU_TOP;
+    let bottom = height * MENU_BOTTOM;
+    for (const other of this.allies) {
+      if (other === acting || other.body.x < acting.body.x - acting.tall * BEHIND) continue;
+      const half = other.tall / 2;
+      if (other.body.y > acting.body.y) bottom = Math.min(bottom, other.body.y - half);
+      else top = Math.max(top, other.body.y + half + other.tall * UNDERFOOT);
+    }
+    return { top, bottom };
+  }
+
+  /** 명령 하나를 부채꼴에 어떻게 적을지 정한다. */
+  private entry(command: Command, picker: CommandPicker): ArcEntry {
     const cost =
       command.id === 'potion'
         ? `${this.supplies?.potions ?? 0}개 남음`
         : command.cost > 0
           ? `MP ${command.cost}`
           : '';
-    const blocked =
-      member.mp < command.cost ||
-      (this.supplies !== null && command.blockedReason({ supplies: this.supplies }) !== null);
-    button.classList.toggle('blocked', blocked);
-    button.append(
-      el('kbd', '', String(index + 1)),
-      el('strong', '', command.name),
-      el('em', '', cost),
-      el('small', '', command.tip),
-    );
-    button.addEventListener('click', () => this.orders?.command(command.id));
-    return button;
+    return { command, cost, blocked: picker.isBlocked(command) };
   }
 
-  private readonly onKey = (event: KeyboardEvent): void => {
-    if (!this.battle || !this.orders || event.repeat) return;
-    if (event.code === 'Tab' || event.code === 'ArrowRight' || event.code === 'ArrowLeft') {
-      event.preventDefault();
-      this.cycleTarget(event.code === 'ArrowLeft' ? -1 : 1);
+  private readonly onKeyDown = (event: KeyboardEvent): void => {
+    const picker = this.picker;
+    if (!picker) return;
+    if (event.key === 'Shift') {
+      this.showAll = true;
       return;
     }
-    const command = this.offered?.commands[digitIndex(event.code)];
-    if (command) this.orders.command(command.id);
+    if (!picker.member || event.repeat) return;
+    const press = PRESSES[event.code];
+    if (press) {
+      event.preventDefault();
+      this.handle(press, picker);
+      return;
+    }
+    const index = digitIndex(event.code);
+    if (index >= 0 && !picker.pending) picker.choose(index);
   };
 
-  /** 살아 있는 적 가운데 다음 적을 겨눈다. */
-  private cycleTarget(step: number): void {
-    const battle = this.battle;
-    if (!battle || !this.orders) return;
-    const standing = battle.enemies.filter((enemy) => enemy.alive);
-    if (standing.length < 2 || !battle.target) return;
-    const at = standing.indexOf(battle.target);
-    this.orders.aim(standing[(at + step + standing.length) % standing.length]!);
+  private readonly onKeyUp = (event: KeyboardEvent): void => {
+    if (event.key === 'Shift') this.showAll = false;
+  };
+
+  /** 겨누는 중이면 위아래가 대상을, 아니면 명령을 옮긴다. */
+  private handle(press: Press, picker: CommandPicker): void {
+    if (press === 'confirm') picker.confirm();
+    else if (press === 'cancel') picker.cancel();
+    else if (picker.pending) picker.cycleTarget(press === 'up' ? -1 : 1);
+    else picker.move(press === 'up' ? -1 : 1);
   }
 }

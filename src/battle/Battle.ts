@@ -1,3 +1,4 @@
+import type { Combatant } from './Combatant';
 import type { Enemy } from './Enemy';
 import type { PartyMember } from './PartyMember';
 import type { Supplies } from './Supplies';
@@ -64,6 +65,27 @@ export class Battle {
     if (index < 0 || !enemy.alive) return false;
     this.targetIndex = index;
     return true;
+  }
+
+  /**
+   * 앞으로 행동할 순서를 count번째까지 내다본다. 명령을 기다리는 아군이 있으면 맨 앞이다.
+   * 지금의 게이지와 민첩만으로 셈한 예상이라, 배리어가 깨지거나 게이지가 밀리면 달라진다.
+   */
+  upcoming(count: number): Combatant[] {
+    const waits = [...this.party, ...this.enemies]
+      .filter((who) => who.alive && who.speed > 0)
+      .map((who) => {
+        const pace = who.speed * GAUGE_RATE;
+        return { who, wait: Math.max(0, GAUGE_FULL - who.ap) / pace, turn: GAUGE_FULL / pace };
+      });
+    const order: Combatant[] = [];
+    while (order.length < count && waits.length > 0) {
+      // 같은 때에 차면 아군이, 그 안에서는 앞사람이 먼저다(tick이 살피는 순서와 같다).
+      const next = waits.reduce((soonest, entry) => (entry.wait < soonest.wait ? entry : soonest));
+      order.push(next.who);
+      next.wait += next.turn;
+    }
+    return order;
   }
 
   /** 시간을 dt초 흘린다. 명령을 기다리는 동안에는 아무 일도 일어나지 않는다. */
