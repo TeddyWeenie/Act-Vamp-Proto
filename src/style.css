@@ -30,24 +30,6 @@ body {
   pointer-events: none;
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(18, 12, 26, 0.55) 100%);
 }
-#title {
-  position: fixed;
-  top: 20px;
-  left: 24px;
-  pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-}
-#title small {
-  color: var(--gold);
-  letter-spacing: 0.18em;
-  font-size: 11px;
-}
-#title h1 {
-  margin: 4px 0 0;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
 #hint {
   position: fixed;
   left: 50%;
@@ -96,5 +78,494 @@ kbd {
   }
   #hint span:last-child {
     display: none;
+  }
+}
+
+/* ---------- 이야기 화면 공통 ---------- */
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+[hidden] {
+  display: none !important;
+}
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+.panel {
+  border: 1px solid rgba(201, 166, 107, 0.45);
+  border-radius: 10px;
+  background: rgba(23, 19, 28, 0.9);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+#ui button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+body.in-battle #hint {
+  display: none;
+}
+
+/* ---------- 할 일 ---------- */
+.quest {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  max-width: 330px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  transition: opacity 0.3s;
+}
+body.in-battle .quest {
+  opacity: 0;
+}
+.quest-chapter {
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+.quest-title {
+  margin: 4px 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.quest-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+  opacity: 0.88;
+}
+.quest-objective {
+  margin: 8px 0 0;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 600;
+}
+.quest-hint {
+  margin: 2px 0 0 14px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* ---------- 말 걸기 안내 ---------- */
+.prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  transform: translateX(-50%);
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* ---------- 대화 ---------- */
+.dialogue {
+  cursor: pointer;
+  background: linear-gradient(to top, rgba(12, 8, 18, 0.55), transparent 45%);
+}
+.dialogue-box {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: min(920px, calc(100% - 32px));
+  min-height: 190px;
+  display: flex;
+  gap: 20px;
+  padding: 18px 22px;
+}
+.dialogue-portrait {
+  flex: none;
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  object-position: 50% 12%;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 166, 107, 0.5);
+  background: #241d2e;
+}
+.dialogue-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dialogue-speaker {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.dialogue-line {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.7;
+}
+.dialogue-more {
+  margin: auto 0 0;
+  padding-top: 10px;
+  text-align: right;
+  font-size: 12px;
+  opacity: 0.7;
+}
+.dialogue-choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.dialogue-choices:empty {
+  display: none;
+}
+.dialogue-choice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(239, 230, 214, 0.25);
+  border-radius: 8px;
+  background: rgba(239, 230, 214, 0.06);
+  text-align: left;
+}
+.dialogue-choice:hover {
+  border-color: var(--gold);
+  background: rgba(201, 166, 107, 0.16);
+}
+.dialogue-choice strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.dialogue-choice small {
+  font-size: 12px;
+  color: var(--gold);
+}
+
+/* ---------- 전투 ---------- */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 7vh;
+  background: #0d0912;
+  pointer-events: none;
+  transition: transform 0.45s ease;
+  z-index: 1;
+}
+body::before {
+  top: 0;
+  transform: translateY(-100%);
+}
+body::after {
+  bottom: 0;
+  transform: translateY(100%);
+}
+body.in-battle::before,
+body.in-battle::after {
+  transform: none;
+}
+#ui {
+  z-index: 2;
+}
+#loading {
+  z-index: 3;
+}
+.battle-message {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.battle-foes {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: grid;
+  gap: 8px;
+  width: 230px;
+}
+.battle-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(1040px, calc(100% - 24px));
+  display: grid;
+  gap: 10px;
+}
+.battle-party {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.plate {
+  display: grid;
+  gap: 4px;
+  padding: 9px 12px 10px;
+  border: 1px solid rgba(239, 230, 214, 0.22);
+  border-radius: 9px;
+  background: rgba(23, 19, 28, 0.88);
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.plate.on {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(201, 166, 107, 0.35);
+}
+.plate.down {
+  opacity: 0.45;
+}
+.plate-name {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.plate-name small {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+.gauge {
+  display: grid;
+  grid-template-columns: 30px 1fr 30px;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.gauge em {
+  font-style: normal;
+  opacity: 0.7;
+}
+.gauge b {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.gauge-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(239, 230, 214, 0.14);
+  overflow: hidden;
+}
+.gauge-track i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.25s ease;
+}
+.gauge-hp i {
+  background: #c8505a;
+}
+.gauge-bp i {
+  background: #6aa6c8;
+}
+.gauge-mp i {
+  background: #8b78c9;
+}
+.gauge-ap .gauge-track {
+  height: 4px;
+}
+.gauge-ap i {
+  background: var(--gold);
+  transition: none;
+}
+.battle-menu {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 12px;
+}
+.battle-menu-title {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: 600;
+}
+.battle-menu-title small {
+  margin-left: 12px;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.6;
+}
+.battle-command {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  padding: 9px 10px;
+  border: 1px solid rgba(239, 230, 214, 0.25);
+  border-radius: 8px;
+  background: rgba(239, 230, 214, 0.06);
+  text-align: left;
+}
+.battle-command:hover {
+  border-color: var(--gold);
+  background: rgba(201, 166, 107, 0.16);
+}
+.battle-command.blocked {
+  opacity: 0.45;
+}
+.battle-command-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.battle-command-head strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.battle-command-head em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11px;
+  color: #b9a8ea;
+  white-space: nowrap;
+}
+.battle-command small {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: 0.78;
+}
+.battle-floats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.battle-float {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-size: 26px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 0 #17131c,
+    0 0 8px rgba(0, 0, 0, 0.8);
+  animation: float-up 1s ease-out forwards;
+}
+.battle-float-damage {
+  color: #ff8d7a;
+}
+.battle-float-barrier {
+  color: #9fd4f0;
+  font-size: 19px;
+}
+.battle-float-heal {
+  color: #a7e59a;
+  font-size: 21px;
+}
+.battle-float-note {
+  color: var(--gold);
+  font-size: 19px;
+}
+@keyframes float-up {
+  from {
+    opacity: 0;
+    margin-top: 8px;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    margin-top: -54px;
+  }
+}
+.battle-mark {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-size: 20px;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: mark-bob 0.8s ease-in-out infinite alternate;
+}
+.battle-mark-target {
+  color: #ff8d7a;
+}
+.battle-mark-active {
+  color: var(--gold);
+}
+@keyframes mark-bob {
+  to {
+    margin-top: -7px;
+  }
+}
+
+/* ---------- 결과 ---------- */
+.result {
+  display: grid;
+  place-items: center;
+  background: rgba(12, 8, 18, 0.62);
+}
+.result-card {
+  width: min(520px, calc(100% - 32px));
+  padding: 30px 34px 26px;
+  text-align: center;
+}
+.result-title {
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  font-size: 12px;
+}
+.result-heading {
+  margin: 8px 0 14px;
+  font-size: 28px;
+  font-weight: 600;
+}
+.result-body,
+.result-note {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.75;
+  font-size: 15px;
+}
+.result-note {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(201, 166, 107, 0.3);
+  color: var(--gold);
+  font-size: 13px;
+}
+.result-button {
+  margin-top: 22px;
+  padding: 10px 26px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: rgba(201, 166, 107, 0.16);
+  font-size: 15px;
+}
+.result-button:hover {
+  background: rgba(201, 166, 107, 0.3);
+}
+@media (max-width: 720px) {
+  .dialogue-portrait {
+    width: 96px;
+    height: 96px;
+  }
+  .dialogue-line {
+    font-size: 15px;
+  }
+  .battle-menu {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .battle-foes {
+    width: 170px;
   }
 }

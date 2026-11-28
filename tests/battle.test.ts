@@ -87,7 +87,8 @@ describe('전투 규칙을 클래스로 옮긴 결과', () => {
   });
 
   it('피해 계산: 배리어 흡수, 관통, 파쇄, 방어', () => {
-    const dummy = () => new Enemy({ id: 'd', name: '허수아비', hp: 80, bp: 20, atk: 0, def: 0, spd: 0, startAp: 70 });
+    const dummy = () =>
+      new Enemy({ id: 'd', name: '허수아비', hp: 80, bp: 20, atk: 0, def: 0, spd: 0, startAp: 70 });
     let t = dummy();
     expect(t.takeDamage(30)).toEqual({ hp: 10, bp: 20, broken: true });
     expect([t.hp, t.bp, t.ap]).toEqual([70, 0, 42]);

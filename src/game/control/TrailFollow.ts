@@ -16,6 +16,11 @@ export class Trail implements Updatable {
     this.reset();
   }
 
+  /** 앞장선 사람이 지금 있는 자리. */
+  get head(): Readonly<Vec2> {
+    return this.leader.position;
+  }
+
   /** 지나온 길을 지우고 지금 자리에서 다시 시작한다. */
   reset(): void {
     this.crumbs.length = 0;
@@ -47,6 +52,9 @@ export class Trail implements Updatable {
   }
 }
 
+/** 앞사람과 이 비율(뒤처질 거리에 견준 값)보다 가까우면 더 다가가지 않는다. 멈춰 선 앞사람에게 겹쳐 서지 않게 한다. */
+const KEEP_RATIO = 0.8;
+
 /** 앞사람이 지나온 길을 일정한 거리를 두고 따라 걷는다. */
 export class TrailFollow implements MoveSource {
   constructor(
@@ -55,6 +63,8 @@ export class TrailFollow implements MoveSource {
   ) {}
 
   moveIntent(from: Readonly<Vec2>): MoveIntent | null {
+    const head = this.trail.head;
+    if (Math.hypot(head.x - from.x, head.z - from.z) < this.lag * KEEP_RATIO) return null;
     const target = this.trail.pointBehind(this.lag);
     const dx = target.x - from.x;
     const dz = target.z - from.z;

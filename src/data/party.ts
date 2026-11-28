@@ -1,5 +1,14 @@
 import type { HeroSpec } from '../battle/PartyMember';
-import { BarrierBreak, BasicAttack, Guard, Mend, Overload, PiercingDrain, Potion, RallyBarrier } from '../battle/commands';
+import {
+  BarrierBreak,
+  BasicAttack,
+  Guard,
+  Mend,
+  Overload,
+  PiercingDrain,
+  Potion,
+  RallyBarrier,
+} from '../battle/commands';
 
 /**
  * 주인공 세 사람의 레벨 1 수치와 명령. 수치는 3D 프로토타입(src/core/rules.js)과 같다.

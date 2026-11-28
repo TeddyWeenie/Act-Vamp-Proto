@@ -4,6 +4,14 @@ import { QuarterStaging } from './game/staging/QuarterStaging';
 import type { Staging } from './game/staging/Staging';
 import { TopStaging } from './game/staging/TopStaging';
 import { TOWN_TOP_PROPS } from './data/town';
+import { DEFAULT_FORMATION, type FormationShape } from './game/logic/formation';
+import { Chapter1Story } from './game/story/Chapter1Story';
+import type { Story } from './game/story/Story';
+import { BattleView } from './ui/BattleView';
+import { DialogueView } from './ui/DialogueView';
+import { PromptView } from './ui/PromptView';
+import { QuestView } from './ui/QuestView';
+import { ResultView } from './ui/ResultView';
 import { AtmosphereLook } from './render/AtmosphereLook';
 import { CartoonSceneLook } from './render/CartoonSceneLook';
 import { FlatLook } from './render/FlatLook';
@@ -12,6 +20,7 @@ import type { SceneLook } from './render/look';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const loading = document.querySelector<HTMLElement>('#loading')!;
+const screens = document.querySelector<HTMLElement>('#ui')!;
 
 const params = new URLSearchParams(location.search);
 // 기본은 비스듬한 탑뷰 50도. &pitch=45처럼 내려다보는 각도를 바꿔 볼 수 있고, ?view=quarter를 붙이면 예전 45도 쿼터뷰로 비교해 볼 수 있다.
@@ -24,7 +33,10 @@ const staging = createStaging(params, air);
 const base = createLook(params, staging.heroHeight);
 const look = air ? new AtmosphereLook(base, staging.bounds) : base;
 
-new GameFactory(canvas, look, staging)
+// 이야기는 기본 구도(탑뷰)의 마을 배치에 맞춰 놓았다. 예전 쿼터뷰는 비교용이라 빈 마을만 보여 준다.
+const story = params.get('view') === 'quarter' ? null : createStory(params, screens);
+
+new GameFactory(canvas, look, staging, story)
   .create()
   .then(({ game, debug }) => {
     game.start();
@@ -42,6 +54,22 @@ function createStaging(query: URLSearchParams, withProps: boolean): Staging {
   if (query.get('view') === 'quarter') return new QuarterStaging();
   const pitch = Number(query.get('pitch'));
   return new TopStaging(pitch >= 30 && pitch <= 80 ? pitch : undefined, withProps ? TOWN_TOP_PROPS : []);
+}
+
+function createStory(query: URLSearchParams, parent: HTMLElement): Story {
+  // 전투 대형의 방향. 기본은 아군이 왼쪽, 적이 오른쪽이고, ?formation=ranks는 아군이 아래, 적이 위다.
+  const formation: FormationShape =
+    query.get('formation') === 'ranks' ? { ...DEFAULT_FORMATION, axis: 'ranks' } : DEFAULT_FORMATION;
+  return new Chapter1Story(
+    {
+      quest: new QuestView(parent, 'CHAPTER 1 · 재의 종소리'),
+      prompt: new PromptView(parent),
+      dialogue: new DialogueView(parent),
+      battle: new BattleView(parent),
+      result: new ResultView(parent),
+    },
+    formation,
+  );
 }
 
 function createLook(query: URLSearchParams, heroHeight: number): SceneLook {

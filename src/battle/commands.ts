@@ -37,7 +37,12 @@ export abstract class Command {
 
   abstract perform(context: CommandContext): void;
 
-  protected hit(context: CommandContext, target: Enemy, raw: number, kind: DamageKind = 'normal'): DamageResult {
+  protected hit(
+    context: CommandContext,
+    target: Enemy,
+    raw: number,
+    kind: DamageKind = 'normal',
+  ): DamageResult {
     const result = target.takeDamage(raw, kind);
     context.events.push({ type: 'hit', actor: context.actor.id, target: target.id, ...result });
     return result;
@@ -46,7 +51,9 @@ export abstract class Command {
 
 /** 생명력 비율이 가장 낮은 동료. 쓰러진 동료가 가장 먼저 뽑힌다. */
 function mostHurt(party: readonly PartyMember[]): PartyMember {
-  return party.reduce((worst, member) => (member.hp / member.maxHp < worst.hp / worst.maxHp ? member : worst));
+  return party.reduce((worst, member) =>
+    member.hp / member.maxHp < worst.hp / worst.maxHp ? member : worst,
+  );
 }
 
 /** 기본 공격: 배리어부터 깎고, 마력을 조금 되찾는다. */

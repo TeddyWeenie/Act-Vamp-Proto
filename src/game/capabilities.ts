@@ -26,6 +26,13 @@ export interface OcclusionTarget {
   readonly elevation: number;
   /** 화면에서 보이는 몸의 절반 폭. 몸 한쪽만 가려져도 알아채는 데 쓴다. */
   readonly halfWidth: number;
+  /** 장면에서 감춰져 있는지. 감춰진 대상은 가려져도 상관없으므로 살피지 않는다. */
+  readonly hidden?: boolean;
+}
+
+/** 가려지지 않게 지켜볼 대상을 받아 주는 것. */
+export interface OcclusionWatch {
+  include(target: OcclusionTarget): void;
 }
 
 /** 캐릭터를 가릴 수 있고, 가리면 스스로 옅어지는 것. */
@@ -60,6 +67,22 @@ export interface WalkableSpace extends CollisionSpace, Terrain {}
 /** 화면 좌표(-1~1)가 가리키는 지면 위치를 알려 주는 것. */
 export interface GroundPicker {
   pickGround(ndcX: number, ndcY: number): Vec2 | null;
+}
+
+/** 화면 안의 한 점. 왼쪽 위가 (0, 0), 오른쪽 아래가 (1, 1)이다. */
+export interface ScreenPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** 장면 속 위치가 화면의 어디에 보이는지 알려 주는 것. 머리 위 숫자나 표시를 띄울 때 쓴다. */
+export interface ScreenProjector {
+  toScreen(point: Readonly<Vec3>): ScreenPoint;
+}
+
+/** 빈자리인지 알려 주는 것. */
+export interface ClearanceMap {
+  isClear(point: Readonly<Vec2>, radius: number): boolean;
 }
 
 /** 클릭 이동의 목적지를 알려 주는 것. */

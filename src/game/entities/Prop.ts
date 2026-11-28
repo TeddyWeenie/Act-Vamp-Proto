@@ -14,6 +14,9 @@ const FADED_OPACITY = 0.45;
  * 광장에 세워 놓는 소품(나무, 울타리, 통). 그림 한 장을 세운 것이고, 길을 막고 땅에 그림자를 드리운다.
  * 캐릭터의 발치는 그대로 가리지만, 몸통이나 머리까지 가리게 되면 스스로 옅어진다.
  */
+/** 소품을 세울 자리와 크기. 어떤 그림을 쓰는지는 넘겨받은 그림이 이미 알고 있다. */
+export type PropSite = Pick<PropPlacement, 'x' | 'z' | 'block' | 'shadow' | 'cover'>;
+
 export class Prop extends Entity implements Obstacle, Occluder {
   readonly footprint: Footprint;
 
@@ -23,7 +26,7 @@ export class Prop extends Entity implements Obstacle, Occluder {
 
   constructor(
     private readonly image: StillImage,
-    placement: PropPlacement,
+    placement: PropSite,
     private readonly look: Pick<BuildingLook, 'groundShadow' | 'fadeRate'>,
   ) {
     super(new Group());

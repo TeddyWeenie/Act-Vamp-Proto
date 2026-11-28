@@ -1,6 +1,6 @@
 import { OrthographicCamera, Plane, Raycaster, Vector2, Vector3, type Camera } from 'three';
-import type { GroundPicker } from '../game/capabilities';
-import { VIEW, towardCamera, type Vec2, type ViewAngle } from '../game/logic/view';
+import type { GroundPicker, ScreenPoint, ScreenProjector } from '../game/capabilities';
+import { VIEW, towardCamera, type Vec2, type Vec3, type ViewAngle } from '../game/logic/view';
 
 const DISTANCE = 60;
 const FOLLOW_RATE = 6;
@@ -9,7 +9,7 @@ const MIN_ZOOM = 0.6;
 const MAX_ZOOM = 1.5;
 
 /** 정해진 각도로 내려다보는 고정 시점 카메라. 각도는 처음에 받은 그대로이고 대상만 따라간다. */
-export class QuarterCamera implements GroundPicker {
+export class QuarterCamera implements GroundPicker, ScreenProjector {
   private readonly lens = new OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
   private readonly target = new Vector3();
   private readonly offset: Vector3;
@@ -18,6 +18,10 @@ export class QuarterCamera implements GroundPicker {
   // 매번 새로 만들지 않고 다시 쓰는 계산용 벡터.
   private readonly pointer = new Vector2();
   private readonly hit = new Vector3();
+  private readonly projected = new Vector3();
+  /** 장면에 따라 잠시 당겨 보는 배율. 1이면 보통이고, 작을수록 가까이 본다. */
+  private closeness = 1;
+  private closenessTarget = 1;
   private readonly minViewHeight: number;
   private readonly maxViewHeight: number;
   private aspect = 16 / 9;
@@ -54,9 +58,19 @@ export class QuarterCamera implements GroundPicker {
     this.apply();
   }
 
+  /** 화면을 잠시 당기거나 되돌린다. ratio가 1보다 작으면 가까이 본다. 휠로 정한 거리는 그대로 남는다. */
+  closeUp(ratio: number): void {
+    this.closenessTarget = ratio;
+  }
+
   /** 대상 위치로 부드럽게 따라간다. snap이면 바로 옮긴다. */
   follow(point: Readonly<Vec2>, dt: number, snap = false): void {
     const k = snap ? 1 : 1 - Math.exp(-FOLLOW_RATE * dt);
+    if (this.closeness !== this.closenessTarget) {
+      const gap = this.closenessTarget - this.closeness;
+      this.closeness = Math.abs(gap) < 0.002 ? this.closenessTarget : this.closeness + gap * k;
+      this.apply();
+    }
     this.target.x += (point.x - this.target.x) * k;
     this.target.z += (point.z - this.target.z) * k;
     this.target.y = 1;
@@ -71,8 +85,13 @@ export class QuarterCamera implements GroundPicker {
     return hit ? { x: hit.x, z: hit.z } : null;
   }
 
+  toScreen(point: Readonly<Vec3>): ScreenPoint {
+    const p = this.projected.set(point.x, point.y, point.z).project(this.lens);
+    return { x: (p.x + 1) / 2, y: (1 - p.y) / 2 };
+  }
+
   private apply(): void {
-    const halfH = this.viewHeight / 2;
+    const halfH = (this.viewHeight * this.closeness) / 2;
     const halfW = halfH * this.aspect;
     this.lens.left = -halfW;
     this.lens.right = halfW;

@@ -36,6 +36,7 @@ export abstract class Character<Clip extends string>
   readonly occlusionHeights: readonly number[];
 
   private state: CharacterState = CHARACTER_STATES.idle;
+  private pose: Pose = 'idle';
   private current: Vec2;
   private direction: Facing;
 
@@ -63,6 +64,15 @@ export abstract class Character<Clip extends string>
     return this.space.heightAt(this.current, this.body.radius);
   }
 
+  /** 키. 머리 위에 숫자나 표시를 띄울 높이를 정할 때 쓴다. */
+  get height(): number {
+    return this.body.height;
+  }
+
+  get hidden(): boolean {
+    return !this.root.visible;
+  }
+
   get halfWidth(): number {
     return this.body.radius;
   }
@@ -87,7 +97,22 @@ export abstract class Character<Clip extends string>
   }
 
   show(pose: Pose, restart = false): void {
+    this.pose = pose;
     this.sprite.play(this.clipFor(pose, this.direction), restart);
+  }
+
+  /** 걷지 않고 그 방향을 바라본다. 대화 상대나 전투의 맞은편을 볼 때 쓴다. */
+  turnTo(dir: Readonly<Vec2>): void {
+    this.direction = this.facingRule.next(dir, this.direction);
+    this.sprite.play(this.clipFor(this.pose, this.direction));
+  }
+
+  /**
+   * 쓰러졌는지 나타낸다. 쓰러진 그림이 아직 없어서 지금은 서 있는 그림을 옆으로 눕힌다.
+   * 쓰러진 동작 그림이 생기면 이 안만 바꾸면 되고, 부르는 쪽은 그대로다.
+   */
+  setFallen(fallen: boolean): void {
+    this.root.rotation.z = fallen ? Math.PI / 2 : 0;
   }
 
   walk(intent: MoveIntent, dt: number): boolean {

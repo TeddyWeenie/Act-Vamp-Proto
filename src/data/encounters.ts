@@ -3,7 +3,12 @@ import type { EnemySpec } from '../battle/Enemy';
 /** 전투 한 판: 나오는 적, 이겼을 때의 보상, 이긴 뒤의 진행 단계. */
 export interface EncounterSpec {
   readonly enemies: readonly EnemySpec[];
-  readonly reward: { readonly gold: number; readonly shards: number; readonly potions: number; readonly xp: number };
+  readonly reward: {
+    readonly gold: number;
+    readonly shards: number;
+    readonly potions: number;
+    readonly xp: number;
+  };
   /** 이기면 넘어가는 진행 단계. */
   readonly nextStage: number;
 }

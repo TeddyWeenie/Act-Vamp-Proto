@@ -1,5 +1,5 @@
 import type { Obstacle, Raised, WalkableSpace } from '../capabilities';
-import { step, type Bounds, type Footprint } from '../logic/movement';
+import { overlapsFootprint, step, type Bounds, type Footprint } from '../logic/movement';
 import type { Vec2 } from '../logic/view';
 
 /**
@@ -36,6 +36,18 @@ export class CollisionMap implements WalkableSpace {
 
   move(from: Readonly<Vec2>, dir: Readonly<Vec2>, distance: number, radius: number): Vec2 {
     return step(from, dir, distance, radius, this.footprints, this.bounds);
+  }
+
+  /**
+   * 반지름 radius인 발밑 원이 그 자리에 설 수 있는지: 맵 안이고, 건물이나 소품과 겹치지 않고, 계단 위가 아니어야 한다.
+   * 전투 대형의 자리를 고를 때 써서, 캐릭터가 벽이나 계단에 파묻힌 채 서지 않게 한다.
+   */
+  isClear(point: Readonly<Vec2>, radius: number): boolean {
+    const { minX, maxX, minZ, maxZ } = this.bounds;
+    if (point.x - radius < minX || point.x + radius > maxX) return false;
+    if (point.z - radius < minZ || point.z + radius > maxZ) return false;
+    if (this.heightAt(point, radius) > 0) return false;
+    return this.footprints.every((box) => !overlapsFootprint(point, radius, box));
   }
 
   clamp(point: Readonly<Vec2>): Vec2 {
