@@ -14,7 +14,7 @@ import { CardinalFacing } from '../src/game/logic/facing';
 import { DEFAULT_FORMATION, type FormationPlan, type FormationShape } from '../src/game/logic/formation';
 import type { Footprint } from '../src/game/logic/movement';
 import type { Vec2 } from '../src/game/logic/view';
-import type { BattleOrders, BattleScreen } from '../src/game/story/screens';
+import type { BattleOrders, BattleScreen, Standing } from '../src/game/story/screens';
 import { CollisionMap } from '../src/game/systems/CollisionMap';
 import type { Pose } from '../src/game/states/characterStates';
 import { Campaign } from '../src/story/Campaign';
@@ -48,6 +48,7 @@ class FakeScreen implements BattleScreen {
   opened = false;
   readonly said: string[] = [];
   readonly floats: string[] = [];
+  standings: readonly Standing[] = [];
   open(_battle: unknown, _supplies: unknown, orders: BattleOrders): void {
     this.opened = true;
     this.orders = orders;
@@ -61,7 +62,9 @@ class FakeScreen implements BattleScreen {
   float(text: string): void {
     this.floats.push(text);
   }
-  mark(): void {}
+  arrange(standings: readonly Standing[]): void {
+    this.standings = standings;
+  }
   refresh(): void {}
   close(): void {
     this.opened = false;
@@ -79,7 +82,10 @@ class FakeArena implements Arena {
   }
 }
 
-const projector: ScreenProjector = { toScreen: () => ({ x: 0.5, y: 0.5 }) };
+/** 장면의 x를 화면 가로로, 높이를 화면 세로로 옮기는 가짜 카메라. */
+const projector: ScreenProjector = {
+  toScreen: (point) => ({ x: 0.5 + point.x / 40, y: 0.5 - point.y / 10 }),
+};
 const BOUNDS = { minX: -20, maxX: 20, minZ: -20, maxZ: 20 };
 const BODY = { speed: 4, radius: 0.45, height: 2.4 };
 const DT = 1 / 30;
@@ -174,6 +180,27 @@ describe('그 자리에서 벌어지는 전투 장면', () => {
       expect(map.isClear(performer.body.position, BODY.radius)).toBe(true);
     }
     foes.forEach((foe, i) => expect(foe.body.position.x).toBeCloseTo(plan.enemies[i]!.x, 1));
+  });
+
+  it('모두가 화면의 어디에 섰는지 알려 주어 이름표가 캐릭터 곁을 따라다니게 한다', () => {
+    const { scene, screen, allies, foes, run } = stage();
+    scene.begin();
+    run(4);
+    expect(screen.standings.map((standing) => standing.who.name)).toEqual([
+      '리시엔',
+      '볼프',
+      '에다',
+      '폭주한 파수기',
+      '균열의 잔향',
+    ]);
+    const hero = screen.standings[0]!;
+    expect(hero.feet.x).toBeCloseTo(0.5 + allies[0]!.body.position.x / 40, 6);
+    // 머리는 발보다 화면 위쪽에 있다.
+    expect(hero.head.y).toBeLessThan(hero.feet.y);
+    // 아군은 화면 왼쪽, 적은 오른쪽에 선다.
+    expect(Math.max(...screen.standings.slice(0, 3).map((standing) => standing.feet.x))).toBeLessThan(
+      0.5 + foes[0]!.body.position.x / 40,
+    );
   });
 
   it('차례가 오면 명령 메뉴를 열고, 명령을 받으면 닫는다', () => {

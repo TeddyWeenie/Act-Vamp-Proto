@@ -4,7 +4,7 @@ import { QuarterStaging } from './game/staging/QuarterStaging';
 import type { Staging } from './game/staging/Staging';
 import { TopStaging } from './game/staging/TopStaging';
 import { TOWN_TOP_PROPS } from './data/town';
-import { DEFAULT_FORMATION, type FormationShape } from './game/logic/formation';
+import { DEFAULT_FORMATION } from './game/logic/formation';
 import { Chapter1Story } from './game/story/Chapter1Story';
 import type { Story } from './game/story/Story';
 import { BattleView } from './ui/BattleView';
@@ -34,7 +34,7 @@ const base = createLook(params, staging.heroHeight);
 const look = air ? new AtmosphereLook(base, staging.bounds) : base;
 
 // 이야기는 기본 구도(탑뷰)의 마을 배치에 맞춰 놓았다. 예전 쿼터뷰는 비교용이라 빈 마을만 보여 준다.
-const story = params.get('view') === 'quarter' ? null : createStory(params, screens);
+const story = params.get('view') === 'quarter' ? null : createStory(screens);
 
 new GameFactory(canvas, look, staging, story)
   .create()
@@ -56,10 +56,7 @@ function createStaging(query: URLSearchParams, withProps: boolean): Staging {
   return new TopStaging(pitch >= 30 && pitch <= 80 ? pitch : undefined, withProps ? TOWN_TOP_PROPS : []);
 }
 
-function createStory(query: URLSearchParams, parent: HTMLElement): Story {
-  // 전투 대형의 방향. 기본은 아군이 왼쪽, 적이 오른쪽이고, ?formation=ranks는 아군이 아래, 적이 위다.
-  const formation: FormationShape =
-    query.get('formation') === 'ranks' ? { ...DEFAULT_FORMATION, axis: 'ranks' } : DEFAULT_FORMATION;
+function createStory(parent: HTMLElement): Story {
   return new Chapter1Story(
     {
       quest: new QuestView(parent, 'CHAPTER 1 · 재의 종소리'),
@@ -68,7 +65,8 @@ function createStory(query: URLSearchParams, parent: HTMLElement): Story {
       battle: new BattleView(parent),
       result: new ResultView(parent),
     },
-    formation,
+    // 전투 대형은 아군이 왼쪽, 적이 오른쪽에 선다(2026-11-28 확정).
+    DEFAULT_FORMATION,
   );
 }
 

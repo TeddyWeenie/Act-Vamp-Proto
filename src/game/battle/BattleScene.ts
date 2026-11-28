@@ -8,7 +8,7 @@ import type { ClearanceMap, ScreenProjector } from '../capabilities';
 import { findClearFormation, type FormationPlan, type FormationShape } from '../logic/formation';
 import type { Vec2 } from '../logic/view';
 import type { StoryScene } from '../story/scene';
-import type { BattleOrders, BattleScreen, FloatKind } from '../story/screens';
+import type { BattleOrders, BattleScreen, FloatKind, Standing } from '../story/screens';
 import type { Arena } from './Arena';
 import { AllyActor, FoeActor, type BattleActor, type Performer } from './BattleActor';
 
@@ -108,7 +108,7 @@ export class BattleScene implements StoryScene, BattleOrders {
     if (this.phase === 'gather') this.gather(dt);
     else if (this.phase === 'fight') this.fight(dt);
     if (this.phase === 'over') return;
-    this.pointOut();
+    this.setup.screen.arrange(this.standings());
     this.setup.screen.refresh();
   }
 
@@ -231,16 +231,14 @@ export class BattleScene implements StoryScene, BattleOrders {
     }
   }
 
-  /** 겨눈 적과 차례가 온 아군의 머리 위에 표시를 띄운다. */
-  private pointOut(): void {
-    const { screen, projector } = this.setup;
-    const fighting = this.phase === 'fight';
-    const target = fighting ? this.battle.target : null;
-    const active = fighting ? this.battle.active : null;
-    const targetActor = target ? this.actors.get(target.id) : undefined;
-    const activeActor = active ? this.actors.get(active.id) : undefined;
-    screen.mark('target', targetActor ? projector.toScreen(targetActor.overhead) : null);
-    screen.mark('active', activeActor ? projector.toScreen(activeActor.overhead) : null);
+  /** 모두가 지금 화면의 어디에 서 있는지. 화면이 이름표와 명령 메뉴를 그 곁에 붙인다. */
+  private standings(): Standing[] {
+    const { projector } = this.setup;
+    return [...this.actors.values()].map((actor) => ({
+      who: actor.combatant,
+      feet: projector.toScreen(actor.feet),
+      head: projector.toScreen(actor.overhead),
+    }));
   }
 
   private float(actor: BattleActor, text: string, kind: FloatKind, drop = 0): void {

@@ -256,19 +256,19 @@ describe('싸움터 화면 잡기', () => {
     return { focus, zooms, shown, arena };
   }
 
-  it('가로 대형은 화면을 당기고, 명령 메뉴에 가리지 않게 남쪽을 본다', () => {
+  it('가로 대형은 화면을 당겨 크게 보고, 대형을 화면 가운데에 담는다', () => {
     const { focus, zooms, shown } = open('sides');
-    expect(zooms).toEqual([0.86]);
+    expect(zooms).toEqual([0.74]);
     expect(focus.position.x).toBe(5);
-    expect(focus.position.z).toBeGreaterThan(-2 + 1);
+    // 서 있는 몸의 키만큼 위로 솟아 보이므로, 카메라는 대형의 발밑보다 조금 북쪽을 본다.
+    expect(Math.abs(focus.position.z + 2)).toBeLessThan(1.5);
     expect(shown[0]!.width).toBeGreaterThan(shown[0]!.depth);
   });
 
-  it('세로 대형은 깊어서 화면을 밀어 모두 담는다', () => {
-    const { focus, zooms } = open('ranks');
-    expect(zooms[0]).toBeGreaterThan(1);
+  it('세로 대형은 깊어서 덜 당겨 모두 담는다', () => {
+    const { zooms } = open('ranks');
+    expect(zooms[0]).toBeGreaterThan(0.74);
     expect(zooms[0]).toBeLessThanOrEqual(1.2);
-    expect(focus.position.z).toBeGreaterThan(-2 + 2);
   });
 
   it('닫으면 화면과 초점을 되돌린다', () => {

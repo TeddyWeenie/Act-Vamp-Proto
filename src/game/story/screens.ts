@@ -1,4 +1,5 @@
 import type { Battle } from '../../battle/Battle';
+import type { Combatant } from '../../battle/Combatant';
 import type { Enemy } from '../../battle/Enemy';
 import type { PartyMember } from '../../battle/PartyMember';
 import type { Supplies } from '../../battle/Supplies';
@@ -55,7 +56,14 @@ export interface BattleOrders {
 }
 
 export type FloatKind = 'damage' | 'barrier' | 'heal' | 'note';
-export type MarkKind = 'target' | 'active';
+
+/** 전투원 한 명이 지금 화면의 어디에 서 있는지. 이름표와 명령 메뉴를 그 곁에 붙이는 데 쓴다. */
+export interface Standing {
+  readonly who: Combatant;
+  /** 발밑과 머리 위의 화면 위치. */
+  readonly feet: ScreenPoint;
+  readonly head: ScreenPoint;
+}
 
 /** 전투의 수치, 명령 메뉴, 머리 위 숫자를 보여 주는 화면. */
 export interface BattleScreen {
@@ -65,8 +73,8 @@ export interface BattleScreen {
   say(text: string): void;
   /** 화면의 한 점에서 떠오르는 글자(피해량, 회복량). */
   float(text: string, kind: FloatKind, at: ScreenPoint): void;
-  /** 겨눈 적이나 차례가 온 아군의 머리 위 표시. null이면 감춘다. */
-  mark(kind: MarkKind, at: ScreenPoint | null): void;
+  /** 전투원들이 선 자리를 알려 준다. 이름표, 명령 메뉴, 머리 위 표시가 캐릭터를 따라다닌다. */
+  arrange(standings: readonly Standing[]): void;
   /** 수치를 다시 읽어 막대를 고친다. */
   refresh(): void;
   close(): void;

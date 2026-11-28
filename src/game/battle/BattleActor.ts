@@ -32,6 +32,12 @@ export abstract class BattleActor {
     return this.body.position;
   }
 
+  /** 발밑. 머리 위와 함께 몸이 화면에서 차지하는 자리를 알려 준다. */
+  get feet(): Vec3 {
+    const { x, z } = this.body.position;
+    return { x, y: this.body.elevation, z };
+  }
+
   /** 머리 위. 숫자와 표시를 띄울 자리다. */
   get overhead(): Vec3 {
     const { x, z } = this.body.position;
